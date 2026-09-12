@@ -32,6 +32,19 @@ class LifecycleInvariantTest {
         assertEquals(100.0, game.metrics().accuracyPercent());
     }
 
+    @Test
+    void moveMetricsIgnoreCallsOutsidePlayableState() {
+        DummyGame game = new DummyGame();
+        game.markMoveForTest();
+        assertEquals(0, game.metrics().moves());
+        game.begin();
+        game.markMoveForTest();
+        assertEquals(1, game.metrics().moves());
+        game.finishForTest();
+        game.markMoveForTest();
+        assertEquals(1, game.metrics().moves());
+    }
+
     private static final class DummyGame extends BaseGame {
         private int starts;
         @Override public String id() { return "test_lifecycle"; }
@@ -41,5 +54,6 @@ class LifecycleInvariantTest {
         void addScore(int amount) { score += amount; }
         void finishForTest() { finish(score); }
         void winForTest() { finishWin(score + 999); }
+        void markMoveForTest() { markMove(); }
     }
 }
