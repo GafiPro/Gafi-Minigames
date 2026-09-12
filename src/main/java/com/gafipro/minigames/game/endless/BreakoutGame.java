@@ -69,7 +69,6 @@ public final class BreakoutGame extends BaseGame {
             vy = -Math.sqrt(Math.max(1, speed * speed - vx * vx));
         }
 
-        boolean bounced = false;
         int bx = (int) Math.floor((ballX + 160) / 40);
         int by = (int) Math.floor((ballY - 60) / 22);
         if (bx >= 0 && bx < cols && by >= 0 && by < rows && bricks[bx][by]) {
@@ -78,7 +77,6 @@ public final class BreakoutGame extends BaseGame {
             score += 50 * level;
             metrics.incrementMoves();
             vy = -vy;
-            bounced = true;
         }
         if (remaining == 0) {
             level++;
@@ -112,19 +110,21 @@ public final class BreakoutGame extends BaseGame {
             c.fill(left + 2, top + 2, left + 38, top + 20, 0xFFE67E22);
         }
         c.fill(baseX + (int) paddleX - 48, 218, baseX + (int) paddleX + 48, 228, 0xFF55CC88);
-        c.fill(baseX + (int) ballX - 6, 112 + (int) ballY - 112 - 6, baseX + (int) ballX + 6, 112 + (int) ballY - 112 + 6, 0xFFFFFFFF);
-        c.drawCenteredTextWithShadow(mc.textRenderer, net.minecraft.text.Text.literal("Score: " + score + " • Lives: " + lives), baseX, 246, 0xFFFFFFFF);
+        c.fill(baseX + (int) ballX - 6, (int) ballY - 6, baseX + (int) ballX + 6, (int) ballY + 6, 0xFFFFFFFF);
+        c.drawCenteredTextWithShadow(mc.textRenderer, net.minecraft.text.Text.literal("Score: " + score + " • Lives: " + lives), baseX, Math.min(246, mc.getWindow().getScaledHeight() - 10), 0xFFFFFFFF);
     }
 
     @Override public void keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == GLFW.GLFW_KEY_R) begin();
-        else if (keyCode == GLFW.GLFW_KEY_LEFT || keyCode == GLFW.GLFW_KEY_A) paddleX -= 18;
+        if (keyCode == GLFW.GLFW_KEY_R) { begin(); return; }
+        if (finished || state != GameState.PLAYING) return;
+        if (keyCode == GLFW.GLFW_KEY_LEFT || keyCode == GLFW.GLFW_KEY_A) paddleX -= 18;
         else if (keyCode == GLFW.GLFW_KEY_RIGHT || keyCode == GLFW.GLFW_KEY_D) paddleX += 18;
         paddleX = Math.max(-132, Math.min(132, paddleX));
     }
 
     @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0) paddleX = Math.max(-132, Math.min(132, mouseX - cx()));
+        if (button != 0 || finished || state != GameState.PLAYING) return true;
+        paddleX = Math.max(-132, Math.min(132, mouseX - cx()));
         return true;
     }
 }
