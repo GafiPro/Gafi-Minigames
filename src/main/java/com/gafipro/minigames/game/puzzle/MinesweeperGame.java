@@ -23,6 +23,8 @@ public final class MinesweeperGame extends BaseGame {
     private int flagged;
     private boolean generated;
     private long startedNanos;
+    private Difficulty difficulty = Difficulty.NORMAL;
+    private enum Difficulty { EASY, NORMAL, HARD }
 
     @Override public String id() { return "minesweeper"; }
     @Override public String title() { return "Minesweeper"; }
@@ -30,14 +32,23 @@ public final class MinesweeperGame extends BaseGame {
 
     @Override
     public void start() {
-        configureNormal();
+        configureDifficulty();
         resetBoard();
-        status = "Normal • Left click reveal • Right click flag • 1 Easy  2 Normal  3 Hard";
+        status = difficultyLabel() + " • Left click reveal • Right click flag • 1 Easy  2 Normal  3 Hard";
+    }
+
+    private void configureDifficulty() {
+        switch (difficulty) {
+            case EASY -> configureEasy();
+            case NORMAL -> configureNormal();
+            case HARD -> configureHard();
+        }
     }
 
     private void configureEasy() { width = 9; height = 9; mineCount = 10; }
     private void configureNormal() { width = 16; height = 16; mineCount = 40; }
     private void configureHard() { width = 30; height = 16; mineCount = 99; }
+    private String difficultyLabel() { return switch (difficulty) { case EASY -> "Easy"; case NORMAL -> "Normal"; case HARD -> "Hard"; }; }
 
     private void resetBoard() {
         mines = new boolean[height][width];
@@ -52,7 +63,6 @@ public final class MinesweeperGame extends BaseGame {
     private void placeMines(int safeX, int safeY) {
         List<Integer> candidates = new ArrayList<>(width * height);
         for (int y = 0; y < height; y++) for (int x = 0; x < width; x++) {
-            // Protect the first clicked cell and its immediate neighbours so the opening is useful.
             if (Math.abs(x - safeX) <= 1 && Math.abs(y - safeY) <= 1) continue;
             candidates.add(y * width + x);
         }
@@ -116,7 +126,7 @@ public final class MinesweeperGame extends BaseGame {
     public void render(DrawContext c, int mx, int my, float delta) {
         var tr = MinecraftClient.getInstance().textRenderer;
         long elapsed = generated ? (System.nanoTime() - startedNanos) / 1_000_000_000L : 0L;
-        drawHeader(c, "MINESWEEPER", "Mines: " + (mineCount - flagged) + " • Time: " + elapsed + "s");
+        drawHeader(c, "MINESWEEPER", "Mines: " + Math.max(0, mineCount - flagged) + " • Time: " + elapsed + "s");
         int cell = cellSize(), left = boardLeft(cell), top = boardTop();
         c.fill(left - 4, top - 4, left + width * cell + 4, top + height * cell + 4, 0xFF20252A);
         for (int y = 0; y < height; y++) for (int x = 0; x < width; x++) {
@@ -179,9 +189,9 @@ public final class MinesweeperGame extends BaseGame {
     @Override
     public void keyPressed(int key, int scan, int modifiers) {
         switch (key) {
-            case 49 -> { configureEasy(); resetBoard(); status = "Easy • First click is safe"; }
-            case 50 -> { configureNormal(); resetBoard(); status = "Normal • First click is safe"; }
-            case 51 -> { configureHard(); resetBoard(); status = "Hard • First click is safe"; }
+            case 49 -> { difficulty = Difficulty.EASY; begin(); }
+            case 50 -> { difficulty = Difficulty.NORMAL; begin(); }
+            case 51 -> { difficulty = Difficulty.HARD; begin(); }
             case 82 -> begin();
             default -> { }
         }
