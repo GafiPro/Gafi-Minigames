@@ -25,7 +25,7 @@ class CoreRuleValidationTest {
             Game game = assertDoesNotThrow(() -> GameFactory.create(entry.id()));
             assertEquals(entry.id(), game.id(), "factory routed the wrong game for " + entry.id());
             assertEquals(entry.title(), game.title(), "factory title mismatch for " + entry.id());
-            assertEquals(entry.category().name(), game.category().trim().toUpperCase(Locale.ROOT), "factory category mismatch for " + entry.id());
+            assertEquals(entry.category().name(), game.category().trim().toUpperCase(Locale.ROOT), "factory category mismatch for " + entry.id() + " (actual='" + game.category() + "', expected='" + entry.category().name() + "')");
         }
     }
 
