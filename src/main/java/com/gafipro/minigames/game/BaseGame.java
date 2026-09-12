@@ -122,7 +122,7 @@ public abstract class BaseGame implements Game {
         state = GameState.DRAW;
     }
 
-    protected void markMove() { if (!finished) metrics.incrementMoves(); }
+    protected void markMove() { if (!finished && state == GameState.PLAYING) metrics.incrementMoves(); }
 
     protected void drawHeader(DrawContext c, String title, String subtitle) {
         MinecraftClient mc = MinecraftClient.getInstance();
