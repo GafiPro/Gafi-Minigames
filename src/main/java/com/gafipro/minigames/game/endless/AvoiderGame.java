@@ -7,7 +7,6 @@ import net.minecraft.client.gui.DrawContext;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /** Survival dodging game with accelerating, re-spawning hazards. */
@@ -34,10 +33,9 @@ public class AvoiderGame extends BaseGame {
     protected double hazardSpeedMultiplier() { return 1.0 + Math.min(2.5, elapsedNanos() / 30_000_000_000.0); }
 
     protected void spawnHazard() {
-        double direction = random.nextBoolean() ? 1 : -1;
         double x = -170 + random.nextDouble() * 340;
         double vx = random.nextDouble() * 22 - 11;
-        double vy = (65 + random.nextDouble() * 70) * hazardSpeedMultiplier();
+        double vy = 65 + random.nextDouble() * 70;
         hazards.add(new Hazard(x, 48, vx, vy, 12 + random.nextInt(8)));
     }
 
@@ -84,14 +82,17 @@ public class AvoiderGame extends BaseGame {
         MinecraftClient mc = MinecraftClient.getInstance();
         drawHeader(c, title().toUpperCase(), status);
         int baseX = cx();
-        c.fill(baseX - 190, 55, baseX + 190, Math.min(280, mc.getWindow().getScaledHeight() - 25), 0xFF20262B);
-        c.fill(baseX + (int) playerX - 10, 225, baseX + (int) playerX + 10, 245, 0xFF55CC88);
+        int bottom = Math.max(100, Math.min(280, mc.getWindow().getScaledHeight() - 25));
+        c.fill(baseX - 190, 70, baseX + 190, bottom, 0xFF20262B);
+        int playerY = Math.max(80, bottom - 55);
+        c.fill(baseX + (int) playerX - 10, playerY, baseX + (int) playerX + 10, playerY + 20, 0xFF55CC88);
         for (Hazard h : hazards) {
             int x = baseX + (int) h.x();
             int y = (int) h.y();
+            if (x < baseX - 205 || x > baseX + 205 || y < 65 || y > bottom) continue;
             c.fill(x - h.size(), y - h.size(), x + h.size(), y + h.size(), 0xFFE74C3C);
         }
-        c.drawCenteredTextWithShadow(mc.textRenderer, net.minecraft.text.Text.literal("Score: " + score), baseX, Math.min(296, mc.getWindow().getScaledHeight() - 15), 0xFFFFFFFF);
+        c.drawCenteredTextWithShadow(mc.textRenderer, net.minecraft.text.Text.literal("Score: " + score), baseX, Math.max(75, bottom + 7), 0xFFFFFFFF);
     }
 
     @Override public void keyPressed(int keyCode, int scanCode, int modifiers) {
@@ -101,7 +102,8 @@ public class AvoiderGame extends BaseGame {
     }
 
     @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0) playerX = Math.max(-170, Math.min(170, mouseX - cx()));
+        if (button != 0 || finished || state != GameState.PLAYING) return true;
+        playerX = Math.max(-170, Math.min(170, mouseX - cx()));
         return true;
     }
 }
