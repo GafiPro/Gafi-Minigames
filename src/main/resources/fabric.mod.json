@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "gafi-minigames",
+  "version": "${version}",
+  "name": "Gafi Minigames",
+  "description": "A polished client-side arcade of GUI minigames.",
+  "authors": ["GafiPro"],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["com.gafipro.minigames.GafiMinigamesClient"]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "~1.21.11",
+    "fabric-api": ">=0.141.6",
+    "java": ">=21"
+  }
+}
