@@ -30,12 +30,25 @@ public final class MultiplayerManager {
         case "INVITE"->{if(a.length==3&&senderName!=null&&!a[1].isBlank()&&!a[2].isBlank()&&validGameId(a[2]))invites.putIfAbsent(a[1],new Invite(a[1],a[2],senderName,System.currentTimeMillis()));}
         case "ACCEPT"->{if(a.length==5&&senderName!=null){Match m=new Match(a[1],a[2],a[3],a[4],Objects.equals(playerName(),a[3]));if(senderName.equalsIgnoreCase(m.opponent)&&validGameId(m.gameId)){matches.putIfAbsent(m.id,m);mc.execute(()->mc.setScreen(new MultiplayerGameScreen(null,m)));}}}
         case "DECLINE"->{if(a.length==2)invites.remove(a[1]);}
-        case "MOVE"->{if(a.length==4&&senderName!=null){Match m=matches.get(a[1]);if(m!=null&&!m.finished&&senderName.equalsIgnoreCase(m.opponent)){try{int seq=Integer.parseInt(a[2]);if(seq==m.nextRemoteAction&&validMove(m.gameId,a[3])){m.nextRemoteAction++;m.remoteMove=a[3];}}catch(NumberFormatException ignored){}}}}
+        case "MOVE"->{
+            if(a.length==4&&senderName!=null){
+                Match m=matches.get(a[1]);
+                if(m!=null&&!m.finished&&senderName.equalsIgnoreCase(m.opponent)){
+                    try{
+                        int seq=Integer.parseInt(a[2]);
+                        if(seq==m.nextRemoteAction&&validRemoteTurn(m)&&validMove(m.gameId,a[3])){m.nextRemoteAction++;m.remoteMove=a[3];}
+                    }catch(NumberFormatException ignored){}
+                }
+            }
+        }
         case "REMATCH"->{if(a.length==3&&senderName!=null){Match m=matches.get(a[1]);if(m!=null&&senderName.equalsIgnoreCase(m.opponent)&&"YES".equals(a[2])){m.rematchRemote=true;tryStartRematch(m);}}}
         case "LEAVE"->{if(a.length==2&&senderName!=null){Match m=matches.get(a[1]);if(m!=null&&senderName.equalsIgnoreCase(m.opponent)){m.finished=true;m.result="Opponent left the match.";}}}
         default->{}
     }}
     private static boolean validGameId(String id){return id.equals("tic_tac_toe")||id.equals("connect_four")||id.equals("rock_paper_scissors");}
+    private static boolean validRemoteTurn(Match m){
+        return m.gameId.equals("rock_paper_scissors") || ((m.turn==0) != m.localHost);
+    }
     private static boolean validMove(String game,String move){try{int value=Integer.parseInt(move.substring(2));if(game.equals("tic_tac_toe")&&move.startsWith("T:"))return value>=0&&value<9;if(game.equals("connect_four")&&move.startsWith("C:"))return value>=0&&value<7;if(game.equals("rock_paper_scissors")&&move.startsWith("R:"))return value>=0&&value<3;}catch(Exception ignored){}return false;}
     public static void invite(String player,String gameId){String self=playerName();if(self==null||player==null||player.equalsIgnoreCase(self)||!validGameId(gameId))return;if(matches.values().stream().anyMatch(m->!m.finished&&(m.opponent.equalsIgnoreCase(player)||m.host.equalsIgnoreCase(player))))return;String id=UUID.randomUUID().toString().substring(0,12);send(player,"INVITE|"+id+"|"+gameId);}
     public static Set<Invite> pendingInvites(){long now=System.currentTimeMillis();invites.values().removeIf(i->now-i.createdAt()>INVITE_TTL);return Set.copyOf(invites.values());}
