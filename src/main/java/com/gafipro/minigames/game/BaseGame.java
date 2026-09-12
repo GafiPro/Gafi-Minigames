@@ -33,12 +33,15 @@ public abstract class BaseGame implements Game {
         score = 0;
         ticks = 0;
         status = "";
-        startedNanos = System.nanoTime();
+        startedNanos = 0L;
         pausedAtNanos = 0L;
         pausedTotalNanos = 0L;
         metrics.score(0).moves(0).combo(0).streak(0).level(0).mistakes(0).accuracyPercent(100).elapsedNanos(0);
         start();
-        if (!finished) state = GameState.PLAYING;
+        if (!finished) {
+            startedNanos = System.nanoTime();
+            state = GameState.PLAYING;
+        }
     }
 
     @Override public void start() { }
