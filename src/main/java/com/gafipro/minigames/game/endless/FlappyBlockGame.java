@@ -1,0 +1,123 @@
+package com.gafipro.minigames.game.endless;
+
+import com.gafipro.minigames.game.BaseGame;
+import com.gafipro.minigames.game.GameState;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
+import org.lwjgl.glfw.GLFW;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+/** Flappy-style endless game with fixed pipe gaps and continuous collision checks. */
+public final class FlappyBlockGame extends BaseGame {
+    private static final int PLAYER_X = -105;
+    private static final int PLAYER_SIZE = 18;
+    private static final int TOP = 65;
+    private static final int BOTTOM = 245;
+    private static final int PIPE_WIDTH = 28;
+    private static final int GAP = 66;
+
+    private record Pipe(double x, int gapTop, boolean scored) {}
+    private final List<Pipe> pipes = new ArrayList<>();
+    private double playerY;
+    private double velocity;
+    private long lastNanos;
+    private long nextSpawnNanos;
+
+    @Override public String id() { return "flappy_block"; }
+    @Override public String title() { return "Flappy Block"; }
+    @Override public String category() { return "Endless"; }
+
+    @Override public void start() {
+        pipes.clear();
+        playerY = 145;
+        velocity = 0;
+        lastNanos = System.nanoTime();
+        nextSpawnNanos = lastNanos + 850_000_000L;
+        addPipe(210);
+        metrics.level(1);
+        status = "SPACE / click to flap • Pass through every gap";
+    }
+
+    private void addPipe(double x) {
+        int span = BOTTOM - TOP - GAP - 8;
+        int gapTop = TOP + 4 + random.nextInt(Math.max(1, span));
+        pipes.add(new Pipe(x, gapTop, false));
+    }
+
+    private void flap() {
+        if (finished || state != GameState.PLAYING) return;
+        velocity = -6.2;
+        markMove();
+    }
+
+    @Override public void tick() {
+        super.tick();
+        if (finished || state != GameState.PLAYING) return;
+        long now = System.nanoTime();
+        double dt = Math.min(0.05, Math.max(0, (now - lastNanos) / 1_000_000_000.0));
+        lastNanos = now;
+        double speed = 125 + Math.min(90, elapsedNanos() / 20_000_000.0);
+        playerY += velocity * dt;
+        velocity += 18.5 * dt;
+
+        for (Iterator<Pipe> it = pipes.iterator(); it.hasNext();) {
+            Pipe p = it.next();
+            double x = p.x() - speed * dt;
+            if (x < -230) it.remove();
+            else {
+                boolean scored = p.scored() || x + PIPE_WIDTH < PLAYER_X;
+                if (!p.scored() && scored) score += 100;
+                if (overlapsPipe(x, p.gapTop())) finish(score);
+                if (p.scored() != scored) {
+                    it.remove();
+                    pipes.add(new Pipe(x, p.gapTop(), scored));
+                    break;
+                }
+            }
+        }
+        if (now >= nextSpawnNanos) {
+            addPipe(215);
+            nextSpawnNanos = now + 900_000_000L;
+            metrics.level(1 + score / 500);
+        }
+        if (playerY < TOP || playerY + PLAYER_SIZE > BOTTOM) finish(score);
+    }
+
+    private boolean overlapsPipe(double x, int gapTop) {
+        double left = PLAYER_X;
+        double right = PLAYER_X + PLAYER_SIZE;
+        double top = playerY;
+        double bottom = playerY + PLAYER_SIZE;
+        if (right <= x || left >= x + PIPE_WIDTH) return false;
+        return top < gapTop || bottom > gapTop + GAP;
+    }
+
+    @Override public void render(DrawContext c, int mx, int my, float delta) {
+        MinecraftClient mc = MinecraftClient.getInstance();
+        drawHeader(c, "FLAPPY BLOCK", status);
+        int baseX = cx();
+        int top = Math.max(50, Math.min(TOP, mc.getWindow().getScaledHeight() - 190));
+        int bottom = Math.min(BOTTOM, mc.getWindow().getScaledHeight() - 35);
+        c.fill(baseX - 190, top, baseX + 190, bottom, 0xFF20262B);
+        c.fill(baseX + PLAYER_X, top + (int) playerY, baseX + PLAYER_X + PLAYER_SIZE, top + (int) playerY + PLAYER_SIZE, 0xFF55CC88);
+        for (Pipe p : pipes) {
+            int x = baseX + (int) p.x();
+            c.fill(x, top, x + PIPE_WIDTH, top + p.gapTop() - TOP, 0xFF3F9B76);
+            int lowerY = top + p.gapTop() - TOP + GAP;
+            c.fill(x, lowerY, x + PIPE_WIDTH, bottom, 0xFF3F9B76);
+        }
+    }
+
+    @Override public void keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == GLFW.GLFW_KEY_R) begin();
+        else if (keyCode == GLFW.GLFW_KEY_SPACE || keyCode == GLFW.GLFW_KEY_UP) flap();
+    }
+
+    @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == 0) flap();
+        return true;
+    }
+}
