@@ -39,13 +39,13 @@ Games run locally and do not replace the player's Minecraft inventory. Statistic
 
 The mod includes shared PvP/session screens and a `/msg`-based invite transport for servers that expose private messaging. Current PvP screens cover Tic-Tac-Toe, Connect Four and Rock Paper Scissors.
 
-This transport is not server-authoritative or cryptographically secure. A client-only Fabric mod cannot enforce authoritative custom game state on an arbitrary vanilla server through ordinary chat. Competitive integrity therefore depends on the server transport available to both clients.
+The transport validates player identity, match membership, action syntax, sequence numbers, turn ownership and match lifecycle, but it is not server-authoritative or cryptographically secure. A client-only Fabric mod cannot enforce authoritative custom game state on an arbitrary vanilla server through ordinary chat. Competitive integrity therefore depends on the server transport available to both clients.
 
 Hidden-information games such as Battleship remain local unless a future server companion provides a privacy-preserving protocol.
 
 ## Statistics
 
-Per-game persistent statistics include games played, wins, losses, draws, best score, current streak, best streak, best time, highest level and average accuracy where applicable. Statistics are saved through a temporary file and atomic replacement when supported, with a safe fallback for filesystems that do not provide atomic moves.
+Per-game persistent statistics include games played, wins, losses, draws, best score, current streak, best streak, best time, highest level and average accuracy where applicable. Statistics reject invalid numeric values and are saved through a temporary file and atomic replacement when supported, with a safe fallback for filesystems that do not provide atomic moves.
 
 ## Word data
 
@@ -65,7 +65,7 @@ GitHub Actions runs the same remapped build and keeps the generated JAR artifact
 
 Game behavior is built around the shared `Game` / `BaseGame` lifecycle, `GameState`, metrics and persistent statistics. Large rule-heavy or real-time games use dedicated engine classes, while smaller games that share a simple structure remain grouped in focused collections.
 
-Deterministic JUnit tests cover catalog/factory synchronization and representative core rules including 2048 merge semantics and Connect Four win detection.
+Deterministic JUnit coverage includes catalog/factory synchronization, 2048 merge semantics, Connect Four win detection, Chess terminal and move legality cases, Checkers captures and promotion, Reversi flipping, Minesweeper safety/flood fill, Sudoku validity/uniqueness, Sliding Puzzle solvability, Match-3 generation and Lights Out edge toggles.
 
 ## Known limitations
 
