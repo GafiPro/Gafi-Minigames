@@ -7,6 +7,7 @@ import com.gafipro.minigames.game.board.ReversiGame;
 import com.gafipro.minigames.game.puzzle.LightsOutGame;
 import com.gafipro.minigames.game.puzzle.Match3Game;
 import com.gafipro.minigames.game.puzzle.MinesweeperGame;
+import com.gafipro.minigames.game.puzzle.NonogramGame;
 import com.gafipro.minigames.game.puzzle.SlidingPuzzleGame;
 import com.gafipro.minigames.game.puzzle.SudokuGame;
 import org.junit.jupiter.api.Test;
@@ -132,6 +133,18 @@ class AdversarialRuleTest {
         method(LightsOutGame.class,"toggle",int.class,int.class).invoke(game,0,0); int count=0;for(boolean[] row:lights)for(boolean v:row)if(v)count++;assertEquals(3,count);
     }
 
+    @Test
+    void nonogramCluesExactlyDescribeTheGeneratedSolution() throws Exception {
+        NonogramGame game = new NonogramGame(); method(NonogramGame.class, "start").invoke(game);
+        boolean[][] solution = get(game, "solution", boolean[][].class);
+        Method clues = method(NonogramGame.class, "clues", boolean.class, int.class);
+        for (int index=0; index<10; index++) {
+            assertArrayEquals(runLengths(solution, true, index), (int[]) clues.invoke(game, true, index));
+            assertArrayEquals(runLengths(solution, false, index), (int[]) clues.invoke(game, false, index));
+        }
+    }
+
+    private static int[] runLengths(boolean[][] solution, boolean row, int index) { java.util.ArrayList<Integer> out=new java.util.ArrayList<>(); int run=0; for(int i=0;i<10;i++){boolean value=row?solution[i][index]:solution[index][i]; if(value)run++; else if(run>0){out.add(run);run=0;}} if(run>0)out.add(run); if(out.isEmpty())out.add(0); return out.stream().mapToInt(Integer::intValue).toArray(); }
     private static List<?> legalMoves(ChessGame game) throws Exception { return (List<?>) method(ChessGame.class, "legalMoves", boolean.class).invoke(game, true); }
     private static boolean hasMove(List<?> moves,int tr,int tc)throws Exception{for(Object m:moves)if(intProperty(m,"tr")==tr&&intProperty(m,"tc")==tc)return true;return false;}
     private static boolean hasJumpTo(List<?> jumps,int tr,int tc)throws Exception{for(Object j:jumps)if(intProperty(j,"tr")==tr&&intProperty(j,"tc")==tc)return true;return false;}
