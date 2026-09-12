@@ -13,13 +13,13 @@ import com.gafipro.minigames.game.board.TicTacToeGame;
 import com.gafipro.minigames.game.endless.EndlessCollection;
 import com.gafipro.minigames.game.puzzle.Game2048;
 import com.gafipro.minigames.game.puzzle.MemoryMatchGame;
+import com.gafipro.minigames.game.puzzle.MazeGame;
 import com.gafipro.minigames.game.puzzle.MinesweeperGame;
 import com.gafipro.minigames.game.puzzle.PuzzleCollection;
 import com.gafipro.minigames.game.puzzle.SudokuGame;
 
 public final class GameFactory {
     private GameFactory() {}
-
     public static Game create(String id) {
         return switch (id) {
             case "reaction_test" -> new ArcadeCollection.ReactionTest();
@@ -42,7 +42,7 @@ public final class GameFactory {
             case "nonogram" -> new PuzzleCollection.Nonogram();
             case "word_search" -> new PuzzleCollection.WordSearch();
             case "match_3" -> new PuzzleCollection.Match3();
-            case "maze" -> new PuzzleCollection.Maze();
+            case "maze" -> new MazeGame();
             case "spot_difference" -> new PuzzleCollection.SpotDifference();
             case "sequence_memory" -> new PuzzleCollection.SequenceMemory();
             case "memory_match" -> new MemoryMatchGame();
