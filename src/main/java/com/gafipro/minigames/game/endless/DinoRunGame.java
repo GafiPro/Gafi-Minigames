@@ -41,6 +41,10 @@ public final class DinoRunGame extends BaseGame {
         status = "SPACE / UP / click to jump • Survive as long as possible";
     }
 
+    private int groundY() {
+        return Math.min(GROUND_Y, MinecraftClient.getInstance().getWindow().getScaledHeight() - 55);
+    }
+
     private void jump() {
         if (finished || state != GameState.PLAYING || playerY != 0) return;
         velocityY = JUMP_VELOCITY;
@@ -86,15 +90,16 @@ public final class DinoRunGame extends BaseGame {
     }
 
     private boolean collides() {
+        double ground = groundY();
         double playerLeft = PLAYER_X;
         double playerRight = PLAYER_X + 28;
-        double playerBottom = GROUND_Y - playerY;
+        double playerBottom = ground - playerY;
         double playerTop = playerBottom - 34;
         for (Obstacle o : obstacles) {
             double left = o.x();
             double right = o.x() + o.width();
-            double bottom = GROUND_Y;
-            double top = GROUND_Y - o.height();
+            double bottom = ground;
+            double top = ground - o.height();
             if (playerRight > left && playerLeft < right && playerBottom > top && playerTop < bottom) return true;
         }
         return false;
@@ -103,7 +108,7 @@ public final class DinoRunGame extends BaseGame {
     @Override public void render(DrawContext c, int mx, int my, float delta) {
         MinecraftClient mc = MinecraftClient.getInstance();
         drawHeader(c, "DINO RUN", status);
-        int ground = Math.min(GROUND_Y, mc.getWindow().getScaledHeight() - 55);
+        int ground = groundY();
         int baseX = cx();
         c.fill(baseX - 190, ground, baseX + 190, ground + 3, 0xFFFFFFFF);
         int py = (int) (ground - 34 - playerY);
