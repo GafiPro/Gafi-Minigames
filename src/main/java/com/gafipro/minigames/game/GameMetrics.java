@@ -1,6 +1,6 @@
 package com.gafipro.minigames.game;
 
-/** Small mutable metrics object used by result screens and future leaderboards. */
+/** Small mutable metrics object used by result screens and persistent statistics. */
 public final class GameMetrics {
     private int score;
     private int moves;
@@ -8,7 +8,7 @@ public final class GameMetrics {
     private int streak;
     private int level;
     private int mistakes;
-    private int accuracyPercent = 100;
+    private double accuracyPercent = 100.0;
     private long elapsedNanos;
 
     public int score() { return score; }
@@ -17,7 +17,7 @@ public final class GameMetrics {
     public int streak() { return streak; }
     public int level() { return level; }
     public int mistakes() { return mistakes; }
-    public int accuracyPercent() { return accuracyPercent; }
+    public double accuracyPercent() { return accuracyPercent; }
     public long elapsedNanos() { return elapsedNanos; }
 
     public GameMetrics score(int value) { score = Math.max(0, value); return this; }
@@ -28,7 +28,7 @@ public final class GameMetrics {
     public GameMetrics streak(int value) { streak = Math.max(0, value); return this; }
     public GameMetrics level(int value) { level = Math.max(0, value); return this; }
     public GameMetrics mistakes(int value) { mistakes = Math.max(0, value); return this; }
-    public GameMetrics accuracyPercent(int value) { accuracyPercent = Math.max(0, Math.min(100, value)); return this; }
+    public GameMetrics accuracyPercent(double value) { accuracyPercent = Math.max(0.0, Math.min(100.0, value)); return this; }
     public GameMetrics elapsedNanos(long value) { elapsedNanos = Math.max(0, value); return this; }
     public long elapsedMillis() { return elapsedNanos / 1_000_000L; }
 }
