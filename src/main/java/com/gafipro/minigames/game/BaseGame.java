@@ -24,7 +24,6 @@ public abstract class BaseGame implements Game {
     private long pausedAtNanos;
     private long pausedTotalNanos;
 
-    /** Starts a fresh game and guarantees the base lifecycle is reset even when subclasses override start(). */
     public final void begin() {
         state = GameState.READY;
         finished = false;
@@ -44,8 +43,7 @@ public abstract class BaseGame implements Game {
 
     @Override public void start() { }
 
-    @Override
-    public void tick() {
+    @Override public void tick() {
         if (state == GameState.PLAYING) {
             ticks++;
             metrics.elapsedNanos(elapsedNanos());
@@ -60,7 +58,6 @@ public abstract class BaseGame implements Game {
     public GameState state() { return state; }
     public GameMetrics metrics() { return metrics; }
 
-    /** Uses a monotonic clock so elapsed durations are unaffected by wall-clock changes. */
     public long elapsedNanos() {
         if (startedNanos == 0L) return 0L;
         long now = state == GameState.PAUSED && pausedAtNanos != 0L ? pausedAtNanos : System.nanoTime();
@@ -82,11 +79,10 @@ public abstract class BaseGame implements Game {
         state = GameState.PLAYING;
     }
 
-    @Override
-    public void close() {
+    @Override public void close() {
         if (!finished || recorded) return;
         metrics.score(score).elapsedNanos(elapsedNanos());
-        GameStats.recordResult(id(), score(), won, draw);
+        GameStats.recordResult(id(), score(), won, draw, metrics.elapsedMillis(), metrics.level(), metrics.accuracyPercent());
         recorded = true;
     }
 
@@ -129,10 +125,7 @@ public abstract class BaseGame implements Game {
         if (!status.isEmpty()) c.drawCenteredTextWithShadow(mc.textRenderer, Text.literal(status).formatted(Formatting.WHITE), cx, 62, 0xFFFFFFFF);
     }
 
-    protected boolean inside(double mx, double my, int x, int y, int w, int h) {
-        return mx >= x && mx < x + w && my >= y && my < y + h;
-    }
-
+    protected boolean inside(double mx, double my, int x, int y, int w, int h) { return mx >= x && mx < x + w && my >= y && my < y + h; }
     protected int cx() { return MinecraftClient.getInstance().getWindow().getScaledWidth() / 2; }
     protected int cy() { return MinecraftClient.getInstance().getWindow().getScaledHeight() / 2; }
     protected int rgb(int r, int g, int b) { return 0xFF000000 | (r << 16) | (g << 8) | b; }
