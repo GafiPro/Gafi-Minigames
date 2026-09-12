@@ -12,17 +12,17 @@ import org.lwjgl.glfw.GLFW;
 public final class MultiplayerGameScreen extends Screen {
     private final Screen parent; private final MultiplayerManager.Match match;
     private final int[] ttt=new int[9]; private final int[][] connect=new int[7][6];
-    private int localRps=-1,remoteRps=-1; private String consumedRemote=""; private boolean localFinished;
+    private int localRps=-1,remoteRps=-1; private boolean localFinished;
     public MultiplayerGameScreen(Screen parent,MultiplayerManager.Match match){super(Text.literal("Gafi Minigames PvP"));this.parent=parent;this.match=match;}
     @Override protected void init(){}
     private String name(){return MinecraftClient.getInstance().player==null?"":MinecraftClient.getInstance().player.getGameProfile().name();}
     private boolean myTurn(){return match.gameId.equals("rock_paper_scissors")||((match.turn==0)==match.localHost);}
-    @Override public void tick(){if(match.finished){localFinished=true;return;}String r=match.remoteMove;if(!r.isEmpty()&&!r.equals(consumedRemote)){consumedRemote=r;applyRemote(r);}}
-    private void applyRemote(String move){try{
-        if(match.gameId.equals("tic_tac_toe")&&move.startsWith("T:")){int i=Integer.parseInt(move.substring(2));if(i>=0&&i<9&&ttt[i]==0){ttt[i]=match.localHost?2:1;match.turn=1-match.turn;checkTtt();}}
-        else if(match.gameId.equals("connect_four")&&move.startsWith("C:")){int col=Integer.parseInt(move.substring(2));if(col>=0&&col<7&&drop(connect,col,match.localHost?2:1)){match.turn=1-match.turn;checkConnect();}}
-        else if(match.gameId.equals("rock_paper_scissors")&&move.startsWith("R:")){int v=Integer.parseInt(move.substring(2));if(v>=0&&v<3){remoteRps=v;resolveRps();}}
-    }catch(NumberFormatException ignored){}}
+    @Override public void tick(){if(match.finished){localFinished=true;return;}String r=match.remoteMove;if(!r.isEmpty()){if(applyRemote(r))MultiplayerManager.acknowledgeRemoteMove(match,r);}}
+    private boolean applyRemote(String move){try{
+        if(match.gameId.equals("tic_tac_toe")&&move.startsWith("T:")){int i=Integer.parseInt(move.substring(2));if(i>=0&&i<9&&ttt[i]==0){ttt[i]=match.localHost?2:1;match.turn=1-match.turn;checkTtt();return true;}}
+        else if(match.gameId.equals("connect_four")&&move.startsWith("C:")){int col=Integer.parseInt(move.substring(2));if(col>=0&&col<7&&drop(connect,col,match.localHost?2:1)){match.turn=1-match.turn;checkConnect();return true;}}
+        else if(match.gameId.equals("rock_paper_scissors")&&move.startsWith("R:")){int v=Integer.parseInt(move.substring(2));if(v>=0&&v<3){remoteRps=v;resolveRps();return true;}}
+    }catch(NumberFormatException ignored){}return false;}
     private void checkTtt(){int w=winner(ttt);if(w==1||w==2)finishMessage(w==(match.localHost?1:2)?"You win!":"You lose!");else if(w==3)finishMessage("Draw!");}
     private int winner(int[] b){int[][] l={{0,1,2},{3,4,5},{6,7,8},{0,3,6},{1,4,7},{2,5,8},{0,4,8},{2,4,6}};for(int[]q:l)if(b[q[0]]!=0&&b[q[0]]==b[q[1]]&&b[q[1]]==b[q[2]])return b[q[0]];for(int v:b)if(v==0)return 0;return 3;}
     private void checkConnect(){for(int p:new int[]{1,2})for(int x=0;x<7;x++)for(int y=0;y<6;y++)for(int[]d:new int[][]{{1,0},{0,1},{1,1},{1,-1}}){int n=0;for(int k=0;k<4;k++){int a=x+d[0]*k,z=y+d[1]*k;if(a>=0&&a<7&&z>=0&&z<6&&connect[a][z]==p)n++;}if(n==4){finishMessage(p==(match.localHost?1:2)?"You win!":"You lose!");return;}}boolean full=true;for(int x=0;x<7;x++)if(connect[x][0]==0)full=false;if(full)finishMessage("Draw!");}
