@@ -42,6 +42,6 @@ public final class MultiplayerManager {
     public static void requestRematch(Match m){if(m==null)return;m.rematchLocal=true;send(m.opponent,"REMATCH|"+m.id+"|YES");}
     public static void leave(Match m){if(m==null)return;send(m.opponent,"LEAVE|"+m.id);m.finished=true;matches.remove(m.id);}
     private static void send(String target,String body){MinecraftClient mc=MinecraftClient.getInstance();if(mc.getNetworkHandler()==null)return;try{String enc=Base64.getUrlEncoder().withoutPadding().encodeToString(body.getBytes(StandardCharsets.UTF_8));mc.getNetworkHandler().sendChatCommand("msg "+target+" "+PREFIX+enc+"]]");}catch(Exception e){if(mc.player!=null)mc.player.sendMessage(Text.literal("Unable to send a Gafi Minigames message. The server may not support /msg."),false);}}
-    private static String profileName(GameProfile p){return p==null?null:p.name().orElse("");}
+    private static String profileName(GameProfile p){return p==null?null:p.name();}
     private static String playerName(){MinecraftClient mc=MinecraftClient.getInstance();return mc.player==null?null:profileName(mc.player.getGameProfile());}
 }
