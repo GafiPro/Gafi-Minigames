@@ -2,6 +2,8 @@ package com.gafipro.minigames.core;
 
 import com.gafipro.minigames.game.Game;
 import com.gafipro.minigames.game.arcade.ArcadeCollection;
+import com.gafipro.minigames.game.arcade.ReactionTestGame;
+import com.gafipro.minigames.game.arcade.WhackAMoleGame;
 import com.gafipro.minigames.game.board.BattleshipGame;
 import com.gafipro.minigames.game.board.BoardCollection;
 import com.gafipro.minigames.game.board.CheckersGame;
@@ -11,12 +13,17 @@ import com.gafipro.minigames.game.board.GomokuGame;
 import com.gafipro.minigames.game.board.ReversiGame;
 import com.gafipro.minigames.game.board.RockPaperScissorsGame;
 import com.gafipro.minigames.game.board.TicTacToeGame;
-import com.gafipro.minigames.game.endless.EndlessCollection;
+import com.gafipro.minigames.game.endless.AvoiderGame;
+import com.gafipro.minigames.game.endless.BreakoutGame;
+import com.gafipro.minigames.game.endless.DinoRunGame;
+import com.gafipro.minigames.game.endless.EndlessDodgerGame;
+import com.gafipro.minigames.game.endless.FlappyBlockGame;
+import com.gafipro.minigames.game.endless.FroggerGame;
 import com.gafipro.minigames.game.endless.PongGame;
 import com.gafipro.minigames.game.endless.SnakeGame;
 import com.gafipro.minigames.game.endless.TetrisGame;
+import com.gafipro.minigames.game.endless.TowerClimberGame;
 import com.gafipro.minigames.game.puzzle.Game2048;
-import com.gafipro.minigames.game.puzzle.MemoryMatchGame;
 import com.gafipro.minigames.game.puzzle.MazeGame;
 import com.gafipro.minigames.game.puzzle.MinesweeperGame;
 import com.gafipro.minigames.game.puzzle.PuzzleCollection;
@@ -26,8 +33,8 @@ public final class GameFactory {
     private GameFactory() {}
     public static Game create(String id) {
         return switch (id) {
-            case "reaction_test" -> new ArcadeCollection.ReactionTest();
-            case "whack_a_mole" -> new ArcadeCollection.WhackAMole();
+            case "reaction_test" -> new ReactionTestGame();
+            case "whack_a_mole" -> new WhackAMoleGame();
             case "color_rush" -> new ArcadeCollection.ColorRush();
             case "pattern_copy" -> new ArcadeCollection.PatternCopy();
             case "fast_click" -> new ArcadeCollection.FastClick();
@@ -49,7 +56,6 @@ public final class GameFactory {
             case "maze" -> new MazeGame();
             case "spot_difference" -> new PuzzleCollection.SpotDifference();
             case "sequence_memory" -> new PuzzleCollection.SequenceMemory();
-            case "memory_match" -> new MemoryMatchGame();
             case "tic_tac_toe" -> new TicTacToeGame();
             case "connect_four" -> new ConnectFourGame();
             case "rock_paper_scissors" -> new RockPaperScissorsGame();
@@ -62,15 +68,15 @@ public final class GameFactory {
             case "gomoku" -> new GomokuGame();
             case "hangman" -> new BoardCollection.Hangman();
             case "snake" -> new SnakeGame();
-            case "dino_run" -> new EndlessCollection.DinoRun();
-            case "flappy_block" -> new EndlessCollection.FlappyBlock();
+            case "dino_run" -> new DinoRunGame();
+            case "flappy_block" -> new FlappyBlockGame();
             case "falling_blocks" -> new TetrisGame();
-            case "breakout" -> new EndlessCollection.Breakout();
+            case "breakout" -> new BreakoutGame();
             case "pong" -> new PongGame();
-            case "frogger" -> new EndlessCollection.Frogger();
-            case "avoider" -> new EndlessCollection.Avoider();
-            case "tower_climber" -> new EndlessCollection.TowerClimber();
-            case "endless_dodger" -> new EndlessCollection.EndlessDodger();
+            case "frogger" -> new FroggerGame();
+            case "avoider" -> new AvoiderGame();
+            case "tower_climber" -> new TowerClimberGame();
+            case "endless_dodger" -> new EndlessDodgerGame();
             default -> throw new IllegalArgumentException("Unknown game: " + id);
         };
     }
