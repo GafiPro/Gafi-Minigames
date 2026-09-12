@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Method;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -23,11 +23,29 @@ class CoreRuleValidationTest {
         for (GameCatalog.Entry entry : GameCatalog.all()) {
             assertTrue(ids.add(entry.id()), "duplicate catalog id: " + entry.id());
             Game game = assertDoesNotThrow(() -> GameFactory.create(entry.id()));
-            String actualCategory = game.category() == null ? "<null>" : game.category().trim();
             assertEquals(entry.id(), game.id());
             assertEquals(entry.title(), game.title());
-            assertEquals(GameCatalog.displayCategory(entry.category()), actualCategory,
+            assertEquals(GameCatalog.displayCategory(entry.category()), game.category(),
                     "category contract for " + entry.id());
+        }
+        assertEquals(ids, GameFactory.supportedIds(), "catalog and factory IDs must be exactly one-to-one");
+    }
+
+    @Test
+    void factoryRejectsUnknownIds() {
+        assertThrows(IllegalArgumentException.class, () -> GameFactory.create("definitely_not_a_game"));
+    }
+
+    @Test
+    void everyFactoryIdConstructsTheExpectedCatalogEntry() {
+        var catalog = GameCatalog.all().stream().collect(Collectors.toMap(GameCatalog.Entry::id, e -> e));
+        for (String id : GameFactory.supportedIds()) {
+            GameCatalog.Entry entry = catalog.get(id);
+            assertNotNull(entry, "factory-only id: " + id);
+            Game game = assertDoesNotThrow(() -> GameFactory.create(id));
+            assertEquals(id, game.id());
+            assertEquals(entry.title(), game.title());
+            assertEquals(GameCatalog.displayCategory(entry.category()), game.category());
         }
     }
 
