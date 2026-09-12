@@ -13,6 +13,7 @@ import java.util.List;
 
 /** Valid Sudoku generator and rule validator with three difficulty levels. */
 public final class SudokuGame extends BaseGame {
+    private final int[][] solution = new int[9][9];
     private final int[][] puzzle = new int[9][9];
     private final int[][] board = new int[9][9];
     private Difficulty difficulty = Difficulty.NORMAL;
@@ -36,51 +37,51 @@ public final class SudokuGame extends BaseGame {
         selected = -1;
         mistakes = 0;
         startedNanos = System.nanoTime();
-        status = difficulty + " • Click a cell, then press 1–9 • 1 Easy  2 Normal  3 Hard";
+        status = difficulty + " • Click a cell, then press 1–9 • F1 Easy  F2 Normal  F3 Hard";
     }
 
     private void generate() {
-        for (int r = 0; r < 9; r++) for (int c = 0; c < 9; c++) puzzle[r][c] = board[r][c] = 0;
+        clear(solution);
+        clear(puzzle);
+        clear(board);
         fillSolved(0);
-        for (int[] row : puzzle) for (int c = 0; c < 9; c++) board[&row - puzzle == 0 ? 0 : 0][c] = row[c];
-        List<Integer> cells = new ArrayList<>(); for (int i = 0; i < 81; i++) cells.add(i);
+        copyInto(solution, puzzle);
+        List<Integer> cells = new ArrayList<>(81);
+        for (int i = 0; i < 81; i++) cells.add(i);
         Collections.shuffle(cells, random);
         int removed = 0;
         for (int idx : cells) {
-            int r = idx / 9, c = idx % 9;
-            int old = puzzle[r][c]; puzzle[r][c] = 0;
+            int r = idx / 9, c = idx % 9, old = puzzle[r][c];
+            puzzle[r][c] = 0;
             if (!hasUniqueSolution(puzzle)) puzzle[r][c] = old;
             else removed++;
             if (removed >= difficulty.removals) break;
         }
-        for (int r = 0; r < 9; r++) for (int c = 0; c < 9; c++) board[r][c] = puzzle[r][c];
+        copyInto(puzzle, board);
     }
 
     private boolean fillSolved(int cell) {
         if (cell == 81) return true;
         int r = cell / 9, c = cell % 9;
-        List<Integer> values = new ArrayList<>(); for (int n = 1; n <= 9; n++) values.add(n);
+        List<Integer> values = new ArrayList<>(List.of(1,2,3,4,5,6,7,8,9));
         Collections.shuffle(values, random);
-        for (int n : values) if (valid(puzzle, r, c, n)) {
-            puzzle[r][c] = n;
+        for (int value : values) if (valid(solution, r, c, value)) {
+            solution[r][c] = value;
             if (fillSolved(cell + 1)) return true;
         }
-        puzzle[r][c] = 0;
+        solution[r][c] = 0;
         return false;
     }
 
-    private boolean hasUniqueSolution(int[][] grid) {
-        int[][] copy = copy(grid);
-        return countSolutions(copy, 0, 2) == 1;
-    }
+    private boolean hasUniqueSolution(int[][] grid) { return countSolutions(copy(grid), 0, 2) == 1; }
 
     private int countSolutions(int[][] grid, int cell, int limit) {
         if (cell == 81) return 1;
         int r = cell / 9, c = cell % 9;
         if (grid[r][c] != 0) return countSolutions(grid, cell + 1, limit);
         int total = 0;
-        for (int n = 1; n <= 9; n++) if (valid(grid, r, c, n)) {
-            grid[r][c] = n;
+        for (int value = 1; value <= 9; value++) if (valid(grid, r, c, value)) {
+            grid[r][c] = value;
             total += countSolutions(grid, cell + 1, limit);
             grid[r][c] = 0;
             if (total >= limit) return total;
@@ -97,7 +98,7 @@ public final class SudokuGame extends BaseGame {
     }
 
     private boolean solved() {
-        for (int r = 0; r < 9; r++) for (int c = 0; c < 9; c++) if (board[r][c] == 0 || !valid(board, r, c, board[r][c])) return false;
+        for (int r = 0; r < 9; r++) for (int c = 0; c < 9; c++) if (board[r][c] != solution[r][c]) return false;
         return true;
     }
 
@@ -107,14 +108,13 @@ public final class SudokuGame extends BaseGame {
     @Override
     public void render(DrawContext c, int mx, int my, float delta) {
         var tr = MinecraftClient.getInstance().textRenderer;
-        long seconds = (System.nanoTime() - startedNanos) / 1_000_000_000L;
+        long seconds = Math.max(0L, (System.nanoTime() - startedNanos) / 1_000_000_000L);
         drawHeader(c, "SUDOKU", "Time: " + String.format("%02d:%02d", seconds / 60, seconds % 60) + " • Mistakes: " + mistakes);
         int cell = cellSize(), sx = left(cell), sy = 74;
         c.fill(sx - 3, sy - 3, sx + cell * 9 + 3, sy + cell * 9 + 3, 0xFF20252A);
         for (int r = 0; r < 9; r++) for (int col = 0; col < 9; col++) {
             int x = sx + col * cell, y = sy + r * cell;
-            boolean given = puzzle[r][col] != 0;
-            boolean active = selected == r * 9 + col;
+            boolean given = puzzle[r][col] != 0, active = selected == r * 9 + col;
             c.fill(x + 1, y + 1, x + cell - 1, y + cell - 1, active ? 0xFF45657A : given ? 0xFF56616B : 0xFF303840);
             int value = board[r][col];
             if (value > 0) c.drawCenteredTextWithShadow(tr, Text.literal(Integer.toString(value)).formatted(Formatting.BOLD), x + cell / 2, y + cell / 2 - 5, given ? 0xFFFFFFFF : 0xFF55CCFF);
@@ -137,15 +137,15 @@ public final class SudokuGame extends BaseGame {
     @Override
     public void keyPressed(int key, int scan, int modifiers) {
         if (key == GLFW.GLFW_KEY_R) { begin(); return; }
-        if (key == GLFW.GLFW_KEY_1) { difficulty = Difficulty.EASY; begin(); return; }
-        if (key == GLFW.GLFW_KEY_2) { difficulty = Difficulty.NORMAL; begin(); return; }
-        if (key == GLFW.GLFW_KEY_3) { difficulty = Difficulty.HARD; begin(); return; }
+        if (key == GLFW.GLFW_KEY_F1) { difficulty = Difficulty.EASY; begin(); return; }
+        if (key == GLFW.GLFW_KEY_F2) { difficulty = Difficulty.NORMAL; begin(); return; }
+        if (key == GLFW.GLFW_KEY_F3) { difficulty = Difficulty.HARD; begin(); return; }
         if (finished || selected < 0) return;
         int row = selected / 9, col = selected % 9;
         if (key >= GLFW.GLFW_KEY_1 && key <= GLFW.GLFW_KEY_9) {
             int value = key - GLFW.GLFW_KEY_0;
-            if (valid(board, row, col, value)) board[row][col] = value;
-            else { mistakes++; status = "That number conflicts with the row, column or box."; }
+            if (valid(board, row, col, value) && solution[row][col] == value) board[row][col] = value;
+            else { mistakes++; status = "That number is not valid for this cell."; }
             markMove();
             if (solved()) finishWin(Math.max(1, 100_000 - (int) ((System.nanoTime() - startedNanos) / 1_000_000L) - mistakes * 500));
         } else if (key == GLFW.GLFW_KEY_BACKSPACE || key == GLFW.GLFW_KEY_DELETE || key == GLFW.GLFW_KEY_0) {
@@ -153,5 +153,7 @@ public final class SudokuGame extends BaseGame {
         }
     }
 
-    private static int[][] copy(int[][] source) { int[][] out = new int[9][9]; for (int r = 0; r < 9; r++) out[r] = source[r].clone(); return out; }
+    private static void clear(int[][] grid) { for (int r = 0; r < 9; r++) for (int c = 0; c < 9; c++) grid[r][c] = 0; }
+    private static void copyInto(int[][] source, int[][] target) { for (int r = 0; r < 9; r++) System.arraycopy(source[r], 0, target[r], 0, 9); }
+    private static int[][] copy(int[][] source) { int[][] out = new int[9][9]; copyInto(source, out); return out; }
 }
