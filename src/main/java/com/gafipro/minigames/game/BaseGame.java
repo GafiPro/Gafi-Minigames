@@ -93,14 +93,17 @@ public abstract class BaseGame implements Game {
     public String status() { return status; }
 
     protected void finish(int finalScore) {
+        if (finished) return;
         score = Math.max(0, finalScore);
         metrics.score(score).elapsedNanos(elapsedNanos());
         finished = true;
         state = GameState.LOST;
+        won = false;
         draw = false;
     }
 
     protected void finishWin(int finalScore) {
+        if (finished) return;
         won = true;
         draw = false;
         score = Math.max(0, finalScore);
@@ -110,6 +113,7 @@ public abstract class BaseGame implements Game {
     }
 
     protected void finishDraw(int finalScore) {
+        if (finished) return;
         won = false;
         draw = true;
         score = Math.max(0, finalScore);
@@ -118,7 +122,7 @@ public abstract class BaseGame implements Game {
         state = GameState.DRAW;
     }
 
-    protected void markMove() { metrics.incrementMoves(); }
+    protected void markMove() { if (!finished) metrics.incrementMoves(); }
 
     protected void drawHeader(DrawContext c, String title, String subtitle) {
         MinecraftClient mc = MinecraftClient.getInstance();
