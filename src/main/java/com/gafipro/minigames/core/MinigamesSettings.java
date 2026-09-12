@@ -22,7 +22,7 @@ public final class MinigamesSettings {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path FILE = FabricLoader.getInstance().getConfigDir().resolve("gafi-minigames-settings.json");
     private static final Set<String> favorites = new HashSet<>();
-    private static final Set<String> recent = new LinkedHashSet<>();
+    private static final LinkedHashSet<String> recent = new LinkedHashSet<>();
     public static boolean sound = true, animations = true, tips = true, confirmExit = true, inviteNotifications = true;
     private static boolean loaded;
     private MinigamesSettings() {}
@@ -33,24 +33,40 @@ public final class MinigamesSettings {
         if (!Files.exists(FILE)) return;
         try {
             JsonObject r = JsonParser.parseString(Files.readString(FILE, StandardCharsets.UTF_8)).getAsJsonObject();
-            sound = !r.has("sound") || r.get("sound").getAsBoolean();
-            animations = !r.has("animations") || r.get("animations").getAsBoolean();
-            tips = !r.has("tips") || r.get("tips").getAsBoolean();
-            confirmExit = !r.has("confirmExit") || r.get("confirmExit").getAsBoolean();
-            inviteNotifications = !r.has("inviteNotifications") || r.get("inviteNotifications").getAsBoolean();
+            readBoolean(r, "sound", value -> sound = value);
+            readBoolean(r, "animations", value -> animations = value);
+            readBoolean(r, "tips", value -> tips = value);
+            readBoolean(r, "confirmExit", value -> confirmExit = value);
+            readBoolean(r, "inviteNotifications", value -> inviteNotifications = value);
             favorites.clear(); recent.clear();
-            if (r.has("favorites") && r.get("favorites").isJsonArray()) r.getAsJsonArray("favorites").forEach(v -> { if (v.isJsonPrimitive()) favorites.add(v.getAsString()); });
-            if (r.has("recent") && r.get("recent").isJsonArray()) r.getAsJsonArray("recent").forEach(v -> { if (v.isJsonPrimitive()) recent.add(v.getAsString()); });
+            if (r.has("favorites") && r.get("favorites").isJsonArray()) r.getAsJsonArray("favorites").forEach(v -> {
+                if (v.isJsonPrimitive()) {
+                    try { favorites.add(v.getAsString()); } catch (Exception e) { LOGGER.warn("Ignoring malformed favorite entry.", e); }
+                }
+            });
+            if (r.has("recent") && r.get("recent").isJsonArray()) r.getAsJsonArray("recent").forEach(v -> {
+                if (v.isJsonPrimitive()) {
+                    try { recent.add(v.getAsString()); } catch (Exception e) { LOGGER.warn("Ignoring malformed recent entry.", e); }
+                }
+            });
+            while (recent.size() > 8) recent.remove(recent.iterator().next());
         } catch (Exception e) {
             LOGGER.warn("Could not load settings from {}. Defaults were retained.", FILE, e);
         }
     }
 
+    @FunctionalInterface private interface BooleanSetter { void set(boolean value); }
+    private static void readBoolean(JsonObject root, String key, BooleanSetter setter) {
+        if (!root.has(key)) return;
+        try { setter.set(root.get(key).getAsBoolean()); }
+        catch (Exception e) { LOGGER.warn("Ignoring malformed boolean setting '{}'.", key, e); }
+    }
+
     public static synchronized boolean favorite(String id){load();return favorites.contains(id);}
     public static synchronized void toggleFavorite(String id){load();if(!favorites.add(id))favorites.remove(id);save();}
     public static synchronized void touchRecent(String id){load();recent.remove(id);recent.add(id);while(recent.size()>8)recent.remove(recent.iterator().next());save();}
-    public static synchronized Set<String> recent(){load();return Set.copyOf(recent);}
-    public static synchronized Set<String> favorites(){load();return Set.copyOf(favorites);}
+    public static synchronized Set<String> recent(){load();return Set.copyOf(new LinkedHashSet<>(recent));}
+    public static synchronized Set<String> favorites(){load();return Set.copyOf(new HashSet<>(favorites));}
     public static void resetStats(){GameStats.reset();}
 
     public static synchronized void save(){
