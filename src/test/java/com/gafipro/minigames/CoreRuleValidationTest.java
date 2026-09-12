@@ -4,6 +4,7 @@ import com.gafipro.minigames.core.GameCatalog;
 import com.gafipro.minigames.core.GameFactory;
 import com.gafipro.minigames.core.WordBank;
 import com.gafipro.minigames.game.Game;
+import com.gafipro.minigames.game.arcade.ArcadeCollection;
 import com.gafipro.minigames.game.board.ConnectFourGame;
 import com.gafipro.minigames.game.puzzle.Game2048;
 import org.junit.jupiter.api.DynamicTest;
@@ -40,4 +41,5 @@ class CoreRuleValidationTest {
     @Test void connectFourDetectsDiagonalWins()throws Exception{Method m=ConnectFourGame.class.getDeclaredMethod("hasWon",int[][].class,int.class);m.setAccessible(true);int[][]b={{0,0,0,1,0,0,0},{0,0,1,2,0,0,0},{0,1,2,2,0,0,0},{1,2,2,1,0,0,0},{0,0,0,0,0,0,0},{0,0,0,0,0,0,0}};assertTrue((boolean)m.invoke(null,(Object)b,1));}
     @Test void connectFourDoesNotAcceptAThreeInARow()throws Exception{Method m=ConnectFourGame.class.getDeclaredMethod("hasWon",int[][].class,int.class);m.setAccessible(true);int[][]b={{0,0,0,0,0,0,0},{0,0,0,0,0,0,0},{0,0,0,0,0,0,0},{0,0,0,1,0,0,0},{0,0,1,1,0,0,0},{0,0,0,0,0,0,0}};assertFalse((boolean)m.invoke(null,(Object)b,1));}
     @Test void wordBankIsSubstantialAndSanitized(){assertTrue(WordBank.all().size()>=64);assertTrue(WordBank.all().stream().allMatch(word->word.matches("[A-Z]{3,18}")));}
+    @Test void fastClickRequiresAllTwentyTargets(){assertFalse(ArcadeCollection.FastClick.completed(19));assertTrue(ArcadeCollection.FastClick.completed(20));assertTrue(ArcadeCollection.FastClick.completed(25));}
 }
