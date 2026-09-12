@@ -18,15 +18,17 @@ import static org.junit.jupiter.api.Assertions.*;
 class CoreRuleValidationTest {
     @Test
     void catalogIsExactlyTheImplemented44Games() {
-        assertEquals(44, GameCatalog.all().size(), "catalog count must remain synchronized with the launcher");
+        assertEquals(44, GameCatalog.all().size());
         Set<String> ids = new HashSet<>();
         for (GameCatalog.Entry entry : GameCatalog.all()) {
             assertTrue(ids.add(entry.id()), "duplicate catalog id: " + entry.id());
             Game game = assertDoesNotThrow(() -> GameFactory.create(entry.id()));
             String actualCategory = game.category() == null ? "<null>" : game.category().trim().toUpperCase(Locale.ROOT);
-            if (!entry.category().name().equals(actualCategory)) throw new AssertionError("CATEGORY MISMATCH id=" + entry.id() + " expected=" + entry.category().name() + " actual=" + actualCategory + " class=" + game.getClass().getName());
-            assertEquals(entry.id(), game.id(), "factory routed the wrong game for " + entry.id());
-            assertEquals(entry.title(), game.title(), "factory title mismatch for " + entry.id());
+            assertEquals(entry.id(), game.id());
+            assertEquals(entry.title(), game.title());
+            if (!entry.category().name().equals(actualCategory)) {
+                throw new IllegalStateException("CATEGORY MISMATCH id=" + entry.id() + " expected=" + entry.category().name() + " actual=" + actualCategory + " class=" + game.getClass().getName());
+            }
         }
     }
 
@@ -35,8 +37,7 @@ class CoreRuleValidationTest {
         Game2048 game = new Game2048();
         Method mergeLine = Game2048.class.getDeclaredMethod("mergeLine", int[].class);
         mergeLine.setAccessible(true);
-        int[] result = (int[]) mergeLine.invoke(game, (Object) new int[]{2, 2, 2, 2});
-        assertArrayEquals(new int[]{4, 4, 0, 0}, result);
+        assertArrayEquals(new int[]{4, 4, 0, 0}, (int[]) mergeLine.invoke(game, (Object) new int[]{2, 2, 2, 2}));
     }
 
     @Test
@@ -44,8 +45,7 @@ class CoreRuleValidationTest {
         Game2048 game = new Game2048();
         Method mergeLine = Game2048.class.getDeclaredMethod("mergeLine", int[].class);
         mergeLine.setAccessible(true);
-        int[] result = (int[]) mergeLine.invoke(game, (Object) new int[]{2, 0, 2, 2});
-        assertArrayEquals(new int[]{4, 2, 0, 0}, result);
+        assertArrayEquals(new int[]{4, 2, 0, 0}, (int[]) mergeLine.invoke(game, (Object) new int[]{2, 0, 2, 2}));
     }
 
     @Test
