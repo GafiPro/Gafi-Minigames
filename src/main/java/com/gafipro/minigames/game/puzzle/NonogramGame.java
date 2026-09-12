@@ -23,7 +23,7 @@ public final class NonogramGame extends BaseGame {
     @Override public void start(){
         do { for(int x=0;x<SIZE;x++)for(int y=0;y<SIZE;y++)solution[x][y]=random.nextDouble()<0.42; } while(!hasAny());
         for(int x=0;x<SIZE;x++)for(int y=0;y<SIZE;y++){filled[x][y]=false;markedEmpty[x][y]=false;}
-        mistakes=0;status="Fill the picture from the clues • Left click fills, right click marks empty";
+        mistakes=0;metrics.mistakes(0);status="Fill the picture from the clues • Left click fills, right click marks empty";
     }
     private boolean hasAny(){for(boolean[] r:solution)for(boolean v:r)if(v)return true;return false;}
     private int[] clues(boolean row,int index){List<Integer> out=new ArrayList<>();int run=0;for(int i=0;i<SIZE;i++){boolean v=row?solution[i][index]:solution[index][i];if(v)run++;else if(run>0){out.add(run);run=0;}}if(run>0)out.add(run);if(out.isEmpty())out.add(0);return out.stream().mapToInt(Integer::intValue).toArray();}
@@ -34,9 +34,19 @@ public final class NonogramGame extends BaseGame {
         int cell=Math.min(30,Math.max(18,(MinecraftClient.getInstance().getWindow().getScaledWidth()-130)/(SIZE+4)));
         int ox=cx()-SIZE*cell/2,oy=82,x=(int)((mx-ox)/cell),y=(int)((my-oy)/cell);
         if(x<0||y<0||x>=SIZE||y>=SIZE)return true;
-        if(button==0)filled[x][y]=!filled[x][y]; else if(button==1)markedEmpty[x][y]=!markedEmpty[x][y]; else return true;
-        markMove();
-        if(filled[x][y]!=solution[x][y]){mistakes++;metrics.mistakes(mistakes);status="Mistake: check the clues • Mistakes: "+mistakes;}else status="Use the row and column clues • Mistakes: "+mistakes;
+        if(button==0){
+            markMove();
+            if(!solution[x][y]){
+                mistakes++;metrics.mistakes(mistakes);status="That cell is not filled • Mistakes: "+mistakes;return true;
+            }
+            filled[x][y]=!filled[x][y];
+            markedEmpty[x][y]=false;
+        } else if(button==1){
+            markMove();
+            markedEmpty[x][y]=!markedEmpty[x][y];
+            if(markedEmpty[x][y])filled[x][y]=false;
+            status="Use the row and column clues • Mistakes: "+mistakes;
+        } else return true;
         if(solved())finishWin(Math.max(100,5000-mistakes*100));
         return true;
     }
