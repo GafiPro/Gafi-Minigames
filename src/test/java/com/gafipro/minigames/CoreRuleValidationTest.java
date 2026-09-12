@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Method;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -24,8 +25,7 @@ class CoreRuleValidationTest {
             Game game = assertDoesNotThrow(() -> GameFactory.create(entry.id()));
             assertEquals(entry.id(), game.id(), "factory routed the wrong game for " + entry.id());
             assertEquals(entry.title(), game.title(), "factory title mismatch for " + entry.id());
-            assertNotNull(game.category(), "game category missing for " + entry.id());
-            assertTrue(Set.of("Arcade", "Puzzle", "Board", "Endless").contains(game.category()), "invalid game category for " + entry.id());
+            assertEquals(entry.category().name(), game.category().trim().toUpperCase(Locale.ROOT), "factory category mismatch for " + entry.id());
         }
     }
 
