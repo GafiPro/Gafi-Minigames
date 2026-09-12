@@ -47,8 +47,8 @@ public final class ArcadeCollection {
         @Override public String id(){return "fast_click";} @Override public String title(){return "Fast Click";} @Override public String category(){return "Arcade";}
         @Override public void start(){clicks=0;end=System.nanoTime()+15_000_000_000L;firstClickNanos=lastClickNanos=totalIntervalNanos=0;move();}
         private void move(){tx=cx()-120+random.nextInt(241);ty=100+random.nextInt(120);}
-        @Override public void tick(){super.tick();if(!finished&&System.nanoTime()>=end)finishWin(score);}
-        @Override public boolean mouseClicked(double mx,double my,int b){if(b!=0||finished)return true;if(Math.hypot(mx-tx,my-ty)<=22){long now=System.nanoTime();if(firstClickNanos==0)firstClickNanos=now;if(lastClickNanos!=0)totalIntervalNanos+=now-lastClickNanos;lastClickNanos=now;clicks++;score=clicks*100;metrics.elapsedNanos(now-firstClickNanos);if(clicks>=20)finishWin(score);else move();}return true;}
+        @Override public void tick(){super.tick();if(!finished&&System.nanoTime()>=end){metrics.accuracyPercent(clicks/20.0*100.0);if(clicks>=20)finishWin(score);else finish(score);}}
+        @Override public boolean mouseClicked(double mx,double my,int b){if(b!=0||finished)return true;if(Math.hypot(mx-tx,my-ty)<=22){long now=System.nanoTime();if(firstClickNanos==0)firstClickNanos=now;if(lastClickNanos!=0)totalIntervalNanos+=now-lastClickNanos;lastClickNanos=now;clicks++;score=clicks*100;metrics.accuracyPercent(Math.min(100.0,clicks/20.0*100.0));metrics.elapsedNanos(now-firstClickNanos);if(clicks>=20)finishWin(score);else move();}return true;}
         @Override public void render(DrawContext c,int mx,int my,float d){String avg=clicks<2?"-":String.format("%.0f ms",totalIntervalNanos/1_000_000.0/(clicks-1));drawHeader(c,"FAST CLICK","20 targets • Clicks: "+clicks+" • Avg interval: "+avg);c.fill(tx-22,ty-22,tx+22,ty+22,0xFFE74C3C);c.fill(tx-4,ty-4,tx+4,ty+4,0xFFFFFFFF);}
         @Override public void keyPressed(int k,int s,int m){if(k==GLFW.GLFW_KEY_R)begin();}
     }
@@ -111,7 +111,7 @@ public final class ArcadeCollection {
         @Override public String id(){return "simon_says";}@Override public String title(){return "Simon Says";}@Override public String category(){return "Arcade";}
         @Override public void start(){seq.clear();seq.add(random.nextInt(4));beginShow();}
         private void beginShow(){showIndex=0;inputIndex=0;showing=true;next=System.nanoTime()+350_000_000L;flash=-1;status="Watch the sequence.";}
-        @Override public void tick(){super.tick();if(showing&&System.nanoTime()>=next){if(showIndex<seq.size()){flash=seq.get(showIndex++);next=System.nanoTime()+450_000_000L;}else{flash=-1;showing=false;status="Repeat the sequence.";}}}
+        @Override public void tick(){super.tick();if(showing&&System.nanoTime()>=next){if(showIndex<seq.size()){flash=seq.get(showIndex++);next=System.nanoTime()+450_000_000L;}else{flash=-1;showing=false;status="Repeat the sequence."}}}
         private void input(int v){if(showing||finished)return;if(v!=seq.get(inputIndex)){finish(score);return;}if(++inputIndex==seq.size()){if(seq.size()>=8){score+=1000;finishWin(score);return;}score+=seq.size()*100;seq.add(random.nextInt(4));beginShow();}}
         @Override public boolean mouseClicked(double mx,double my,int b){if(b!=0)return true;for(int i=0;i<4;i++){int x=cx()-105+(i%2)*110,y=85+(i/2)*70;if(inside(mx,my,x,y,100,60)){input(i);return true;}}return true;}
         @Override public void keyPressed(int k,int s,int m){if(k==GLFW.GLFW_KEY_R){begin();return;}if(k>=GLFW.GLFW_KEY_1&&k<=GLFW.GLFW_KEY_4)input(k-GLFW.GLFW_KEY_1);}
