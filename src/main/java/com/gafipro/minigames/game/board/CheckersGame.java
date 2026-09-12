@@ -42,7 +42,8 @@ public final class CheckersGame extends BaseGame {
         if(difficulty==Difficulty.EASY)return turns.get(random.nextInt(turns.size()));
         int best=Integer.MIN_VALUE;List<List<Jump>> bests=new ArrayList<>();
         for(List<Jump> t:turns){Snap s=snap();applyTurn(t);int v=difficulty==Difficulty.HARD?search(3,Integer.MIN_VALUE+1,Integer.MAX_VALUE-1):evaluate();restore(s);
-            if(v>best){best=v;bests.clear();bests.add(t);}else if(v==best)bests.add(t);}
+            if(v>best){best=v;bests.clear();bests.add(t);}else if(v==best)bests.add(t);
+        }
         return bests.get(random.nextInt(bests.size()));
     }
 
@@ -52,7 +53,8 @@ public final class CheckersGame extends BaseGame {
         if(depth==0)return evaluate();
         boolean max=!whiteTurn;int best=max?Integer.MIN_VALUE:Integer.MAX_VALUE;
         for(List<Jump> t:turns){Snap s=snap();applyTurn(t);int v=search(depth-1,alpha,beta);restore(s);
-            if(max){best=Math.max(best,v);alpha=Math.max(alpha,best);}else{best=Math.min(best,v);beta=Math.min(beta,best);}if(beta<=alpha)break;}
+            if(max){best=Math.max(best,v);alpha=Math.max(alpha,best);}else{best=Math.min(best,v);beta=Math.min(beta,best);}if(beta<=alpha)break;
+        }
         return best;
     }
 
@@ -62,11 +64,14 @@ public final class CheckersGame extends BaseGame {
 
     private List<List<Jump>> legalTurns(boolean white){
         List<List<Jump>> caps=new ArrayList<>();
-        if(forcedR>=0){for(Jump j:jumps(forcedR,forcedC,board[forcedR][forcedC]))caps.add(List.of(j));return caps;}
+        if(forcedR>=0){
+            for(Jump j:jumps(forcedR,forcedC,board[forcedR][forcedC]))caps.add(List.of(j));
+            return caps;
+        }
         for(int r=0;r<8;r++)for(int c=0;c<8;c++)if(owns(board[r][c],white))collectCaptures(r,c,new ArrayList<>(),caps);
         if(!caps.isEmpty())return caps;
         List<List<Jump>> moves=new ArrayList<>();
-        for(int r=0;r<8;r++)for(int c=0;c<8;c++)if(owns(board[r][c],white))for(int[]d:dirs(board[r][c])){int tr=r+d[0],tc=c+d[1];if(in(tr,tc)&&board[tr][tc]==0)moves.add(List.of(new Jump(r,c,tr,tc,-1,-1)));}
+        for(int r=0;r<8;r++)for(int c=0;c<8;c++)if(owns(board[r][c],white))for(int[]d:dirs(board[r][c])){int tr=r+d[0],tc=c+d[1];if(in(tr,tc))moves.add(List.of(new Jump(r,c,tr,tc,-1,-1)));}
         return moves;
     }
 
@@ -85,6 +90,20 @@ public final class CheckersGame extends BaseGame {
     private void playTurn(List<Jump> t){for(Jump j:t){applyJump(j);markMove();score+=j.cr>=0?100:10;}forcedR=forcedC=-1;whiteTurn=!whiteTurn;resolve();}
     private void applyJump(Jump j){int p=board[j.fr][j.fc];board[j.fr][j.fc]=0;if(j.cr>=0)board[j.cr][j.cc]=0;if(p==WHITE&&j.tr==0)p=WK;if(p==BLACK&&j.tr==7)p=BK;board[j.tr][j.tc]=p;}
 
+    private void playHumanMove(Jump j){
+        applyJump(j);
+        markMove();
+        score+=j.cr>=0?100:10;
+        if(j.cr>=0 && Math.abs(board[j.tr][j.tc])==1 && ((board[j.tr][j.tc]==WHITE&&j.tr==0)||(board[j.tr][j.tc]==BLACK&&j.tr==7))) {
+            forcedR=forcedC=-1;whiteTurn=!whiteTurn;sr=sc=-1;resolve();return;
+        }
+        List<Jump> next=jumps(j.tr,j.tc,board[j.tr][j.tc]);
+        if(j.cr>=0 && !next.isEmpty()){
+            forcedR=j.tr;forcedC=j.tc;sr=j.tr;sc=j.tc;status="Continue capture from the highlighted piece.";return;
+        }
+        forcedR=forcedC=-1;whiteTurn=!whiteTurn;sr=sc=-1;resolve();
+    }
+
     private void resolve(){int white=0,black=0;for(int[]row:board)for(int p:row){if(p>0)white++;if(p<0)black++;}if(black==0){status="You win!";finishWin(1000+score);return;}if(white==0){status="Black wins.";finish(0);return;}if(legalTurns(whiteTurn).isEmpty()){if(whiteTurn){status="No legal moves — Black wins.";finish(0);}else{status="No legal moves — you win!";finishWin(1000+score);}}else status=whiteTurn?"Your turn • White":"Black is thinking...";}
 
     @Override public void render(DrawContext c,int mx,int my,float delta){var mc=MinecraftClient.getInstance();drawHeader(c,"CHECKERS",status);int cell=Math.min(54,Math.max(34,(mc.getWindow().getScaledHeight()-155)/8));int size=cell*8,ox=cx()-size/2,oy=78;
@@ -92,10 +111,29 @@ public final class CheckersGame extends BaseGame {
         c.drawCenteredTextWithShadow(mc.textRenderer,Text.literal("Click a piece and its legal destination • R Restart • 1/2/3 Difficulty"),cx(),oy+size+10,0xFFAAAAAA);
     }
 
-    @Override public boolean mouseClicked(double mx,double my,int button){if(button!=0||finished||!whiteTurn)return true;int cell=Math.min(54,Math.max(34,(MinecraftClient.getInstance().getWindow().getScaledHeight()-155)/8));int size=cell*8,ox=cx()-size/2,oy=78;int c=(int)((mx-ox)/cell),r=(int)((my-oy)/cell);if(!in(r,c))return true;
-        if(sr<0){if(owns(board[r][c],true)){sr=r;sc=c;}return true;}
-        for(List<Jump> t:legalTurns(true))if(t.size()==1){Jump j=t.get(0);if(j.fr==sr&&j.fc==sc&&j.tr==r&&j.tc==c){playTurn(t);sr=sc=-1;return true;}}
-        if(owns(board[r][c],true)){sr=r;sc=c;}return true;
+    @Override public boolean mouseClicked(double mx,double my,int button){
+        if(button!=0||finished||!whiteTurn)return true;
+        int cell=Math.min(54,Math.max(34,(MinecraftClient.getInstance().getWindow().getScaledHeight()-155)/8));int size=cell*8,ox=cx()-size/2,oy=78;
+        int c=(int)((mx-ox)/cell),r=(int)((my-oy)/cell);if(!in(r,c))return true;
+
+        if(sr<0){
+            if(owns(board[r][c],true)){
+                List<List<Jump>> legal=legalTurns(true);
+                boolean captureExists=legal.stream().anyMatch(t->!t.isEmpty()&&t.get(0).cr>=0);
+                boolean pieceCanMove=legal.stream().anyMatch(t->!t.isEmpty()&&t.get(0).fr==r&&t.get(0).fc==c);
+                if(!captureExists||pieceCanMove){sr=r;sc=c;}
+            }
+            return true;
+        }
+
+        for(List<Jump> t:legalTurns(true)){
+            if(t.isEmpty())continue;
+            Jump j=t.get(0);
+            if(j.fr==sr&&j.fc==sc&&j.tr==r&&j.tc==c){playHumanMove(j);return true;}
+        }
+
+        if(forcedR<0&&owns(board[r][c],true)){sr=r;sc=c;}
+        return true;
     }
     @Override public void keyPressed(int key,int scan,int modifiers){if(key==GLFW.GLFW_KEY_R){begin();return;}if(finished)return;if(key==GLFW.GLFW_KEY_1){difficulty=Difficulty.EASY;begin();}else if(key==GLFW.GLFW_KEY_2){difficulty=Difficulty.NORMAL;begin();}else if(key==GLFW.GLFW_KEY_3){difficulty=Difficulty.HARD;begin();}}
 }
