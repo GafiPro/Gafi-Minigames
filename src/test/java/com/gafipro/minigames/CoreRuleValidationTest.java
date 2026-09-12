@@ -24,10 +24,9 @@ class CoreRuleValidationTest {
             assertTrue(ids.add(entry.id()), "duplicate catalog id: " + entry.id());
             Game game = assertDoesNotThrow(() -> GameFactory.create(entry.id()));
             String actualCategory = game.category() == null ? "<null>" : game.category().trim().toUpperCase(Locale.ROOT);
-            System.err.println("CATALOG " + entry.id() + " expected=" + entry.category().name() + " actual=" + actualCategory);
+            if (!entry.category().name().equals(actualCategory)) throw new AssertionError("CATEGORY MISMATCH id=" + entry.id() + " expected=" + entry.category().name() + " actual=" + actualCategory + " class=" + game.getClass().getName());
             assertEquals(entry.id(), game.id(), "factory routed the wrong game for " + entry.id());
             assertEquals(entry.title(), game.title(), "factory title mismatch for " + entry.id());
-            assertEquals(entry.category().name(), actualCategory, "factory category mismatch for " + entry.id());
         }
     }
 
@@ -53,14 +52,7 @@ class CoreRuleValidationTest {
     void connectFourDetectsDiagonalWins() throws Exception {
         Method hasWon = ConnectFourGame.class.getDeclaredMethod("hasWon", int[][].class, int.class);
         hasWon.setAccessible(true);
-        int[][] board = {
-                {0,0,0,1,0,0,0},
-                {0,0,1,2,0,0,0},
-                {0,1,2,2,0,0,0},
-                {1,2,2,1,0,0,0},
-                {0,0,0,0,0,0,0},
-                {0,0,0,0,0,0,0}
-        };
+        int[][] board = {{0,0,0,1,0,0,0},{0,0,1,2,0,0,0},{0,1,2,2,0,0,0},{1,2,2,1,0,0,0},{0,0,0,0,0,0,0},{0,0,0,0,0,0,0}};
         assertTrue((boolean) hasWon.invoke(null, (Object) board, 1));
     }
 
@@ -68,14 +60,7 @@ class CoreRuleValidationTest {
     void connectFourDoesNotAcceptAThreeInARow() throws Exception {
         Method hasWon = ConnectFourGame.class.getDeclaredMethod("hasWon", int[][].class, int.class);
         hasWon.setAccessible(true);
-        int[][] board = {
-                {0,0,0,0,0,0,0},
-                {0,0,0,0,0,0,0},
-                {0,0,0,0,0,0,0},
-                {0,0,0,1,0,0,0},
-                {0,0,1,1,0,0,0},
-                {0,0,0,0,0,0,0}
-        };
+        int[][] board = {{0,0,0,0,0,0,0},{0,0,0,0,0,0,0},{0,0,0,0,0,0,0},{0,0,0,1,0,0,0},{0,0,1,1,0,0,0},{0,0,0,0,0,0,0}};
         assertFalse((boolean) hasWon.invoke(null, (Object) board, 1));
     }
 
