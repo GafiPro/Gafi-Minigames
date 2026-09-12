@@ -18,6 +18,7 @@ public abstract class BaseGame implements Game {
     protected int ticks;
     protected boolean recorded;
     protected boolean won;
+    protected boolean draw;
     protected String status = "";
     private long startedNanos;
     private long pausedAtNanos;
@@ -28,6 +29,7 @@ public abstract class BaseGame implements Game {
         state = GameState.READY;
         finished = false;
         won = false;
+        draw = false;
         recorded = false;
         score = 0;
         ticks = 0;
@@ -37,7 +39,7 @@ public abstract class BaseGame implements Game {
         pausedTotalNanos = 0L;
         metrics.score(0).moves(0).combo(0).streak(0).level(0).mistakes(0).accuracyPercent(100).elapsedNanos(0);
         start();
-        state = finished ? (won ? GameState.WON : GameState.LOST) : GameState.PLAYING;
+        if (!finished) state = GameState.PLAYING;
     }
 
     @Override public void start() { }
@@ -84,7 +86,7 @@ public abstract class BaseGame implements Game {
     public void close() {
         if (!finished || recorded) return;
         metrics.score(score).elapsedNanos(elapsedNanos());
-        GameStats.record(id(), score(), won);
+        GameStats.recordResult(id(), score(), won, draw);
         recorded = true;
     }
 
@@ -96,10 +98,12 @@ public abstract class BaseGame implements Game {
         metrics.score(score).elapsedNanos(elapsedNanos());
         finished = true;
         state = GameState.LOST;
+        draw = false;
     }
 
     protected void finishWin(int finalScore) {
         won = true;
+        draw = false;
         score = Math.max(0, finalScore);
         metrics.score(score).elapsedNanos(elapsedNanos());
         finished = true;
@@ -108,6 +112,7 @@ public abstract class BaseGame implements Game {
 
     protected void finishDraw(int finalScore) {
         won = false;
+        draw = true;
         score = Math.max(0, finalScore);
         metrics.score(score).elapsedNanos(elapsedNanos());
         finished = true;
