@@ -67,6 +67,11 @@ public final class GameStats {
         });
     }
 
+    private static int saturatingAdd(int a, int b) {
+        long sum = (long) a + b;
+        return sum >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) sum;
+    }
+
     private static void sanitizeCounters() {
         Set<String> ids = new HashSet<>();
         ids.addAll(games.keySet()); ids.addAll(wins.keySet()); ids.addAll(losses.keySet()); ids.addAll(draws.keySet()); ids.addAll(best.keySet());
@@ -80,7 +85,7 @@ public final class GameStats {
             int draw = Math.min(Math.max(0, draws.getOrDefault(id, 0)), remaining);
             games.put(id, total); wins.put(id, win); losses.put(id, loss); draws.put(id, draw);
             streak.put(id, Math.min(Math.max(0, streak.getOrDefault(id, 0)), win));
-            bestStreak.put(id, Math.max(0, bestStreak.getOrDefault(id, 0)));
+            bestStreak.put(id, Math.min(Math.max(0, bestStreak.getOrDefault(id, 0)), total));
             best.put(id, Math.max(0, best.getOrDefault(id, 0)));
             highestLevel.put(id, Math.max(0, highestLevel.getOrDefault(id, 0)));
             if (bestTime.getOrDefault(id, 0L) < 0) bestTime.put(id, 0L);
@@ -104,10 +109,10 @@ public final class GameStats {
     public static void recordResult(String id, int score, boolean won, boolean draw) { recordResult(id, score, won, draw, 0, 0, 100); }
     public static synchronized void recordResult(String id, int score, boolean won, boolean draw, long elapsedMillis, int level, double accuracyPercent) {
         load();
-        games.merge(id, 1, Integer::sum);
-        if (draw) { draws.merge(id, 1, Integer::sum); streak.put(id, 0); }
-        else if (won) { wins.merge(id, 1, Integer::sum); int currentStreak = streak.merge(id, 1, Integer::sum); bestStreak.merge(id, currentStreak, Math::max); }
-        else { losses.merge(id, 1, Integer::sum); streak.put(id, 0); }
+        games.merge(id, 1, GameStats::saturatingAdd);
+        if (draw) { draws.merge(id, 1, GameStats::saturatingAdd); streak.put(id, 0); }
+        else if (won) { wins.merge(id, 1, GameStats::saturatingAdd); int currentStreak = streak.merge(id, 1, GameStats::saturatingAdd); bestStreak.merge(id, currentStreak, Math::max); }
+        else { losses.merge(id, 1, GameStats::saturatingAdd); streak.put(id, 0); }
         best.merge(id, Math.max(0, score), Math::max);
         if (elapsedMillis > 0) bestTime.merge(id, elapsedMillis, (old, value) -> old == 0 ? value : Math.min(old, value));
         if (level > 0) highestLevel.merge(id, level, Math::max);
