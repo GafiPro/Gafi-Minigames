@@ -4,8 +4,8 @@ import com.gafipro.minigames.core.GameCatalog;
 import com.gafipro.minigames.core.GameFactory;
 import com.gafipro.minigames.core.WordBank;
 import com.gafipro.minigames.game.Game;
-import com.gafipro.minigames.game.puzzle.Game2048;
 import com.gafipro.minigames.game.board.ConnectFourGame;
+import com.gafipro.minigames.game.puzzle.Game2048;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Method;
@@ -23,12 +23,11 @@ class CoreRuleValidationTest {
         for (GameCatalog.Entry entry : GameCatalog.all()) {
             assertTrue(ids.add(entry.id()), "duplicate catalog id: " + entry.id());
             Game game = assertDoesNotThrow(() -> GameFactory.create(entry.id()));
-            String actualCategory = game.category() == null ? "<null>" : game.category().trim().toUpperCase(Locale.ROOT);
+            String actualCategory = game.category() == null ? "<null>" : game.category().trim();
             assertEquals(entry.id(), game.id());
             assertEquals(entry.title(), game.title());
-            if (!entry.category().name().equals(actualCategory)) {
-                throw new IllegalStateException("CATEGORY MISMATCH id=" + entry.id() + " expected=" + entry.category().name() + " actual=" + actualCategory + " class=" + game.getClass().getName());
-            }
+            assertEquals(GameCatalog.displayCategory(entry.category()), actualCategory,
+                    "category contract for " + entry.id());
         }
     }
 
