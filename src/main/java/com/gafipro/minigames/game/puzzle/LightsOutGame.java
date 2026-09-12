@@ -15,8 +15,11 @@ public final class LightsOutGame extends BaseGame {
     @Override public String category() { return "Puzzle"; }
 
     @Override public void start() {
-        for (int x = 0; x < SIZE; x++) java.util.Arrays.fill(lights[x], false);
-        for (int i = 0, presses = 10 + random.nextInt(15); i < presses; i++) toggle(random.nextInt(SIZE), random.nextInt(SIZE));
+        do {
+            for (int x = 0; x < SIZE; x++) java.util.Arrays.fill(lights[x], false);
+            int presses = 10 + random.nextInt(15);
+            for (int i = 0; i < presses; i++) toggle(random.nextInt(SIZE), random.nextInt(SIZE));
+        } while (solved());
         status = "Turn every light off • R restart";
     }
 
