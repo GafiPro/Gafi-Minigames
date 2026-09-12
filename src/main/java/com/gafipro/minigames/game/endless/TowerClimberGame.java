@@ -31,12 +31,17 @@ public final class TowerClimberGame extends BaseGame {
         velocityY = -320;
         cameraY = 0;
         lastNanos = System.nanoTime();
-        for (int i = 0; i < 16; i++) addPlatform(90 + i * 55);
+        platforms.add(new Platform(0, 235, 120));
+        double y = 180;
+        for (int i = 0; i < 16; i++) {
+            addPlatformAt(y);
+            y -= 55 + random.nextInt(18);
+        }
         metrics.level(1);
         status = "A/D or arrows • Land on platforms and keep climbing";
     }
 
-    private void addPlatform(double y) {
+    private void addPlatformAt(double y) {
         double x = -150 + random.nextDouble() * 300;
         double width = 60 + random.nextInt(30);
         platforms.add(new Platform(x, y, width));
@@ -69,12 +74,14 @@ public final class TowerClimberGame extends BaseGame {
             double shift = cameraY + 105 - playerY;
             cameraY += shift;
             score += (int) shift;
-            while (platforms.get(platforms.size() - 1).y() < cameraY + 520) {
-                addPlatform(platforms.get(platforms.size() - 1).y() + 55 + random.nextInt(18));
+            double minimumY = platforms.stream().mapToDouble(Platform::y).min().orElse(playerY);
+            while (minimumY > cameraY - 520) {
+                minimumY -= 55 + random.nextInt(18);
+                addPlatformAt(minimumY);
             }
             metrics.level(1 + Math.max(0, score / 500));
         }
-        platforms.removeIf(p -> p.y() < cameraY - 80);
+        platforms.removeIf(p -> p.y() > cameraY + 360);
         if (playerY > cameraY + 310) finish(score);
     }
 
