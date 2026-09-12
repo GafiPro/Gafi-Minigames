@@ -105,11 +105,13 @@ public final class FlappyBlockGame extends BaseGame {
         int top = Math.max(50, Math.min(TOP, mc.getWindow().getScaledHeight() - 190));
         int bottom = Math.min(BOTTOM, mc.getWindow().getScaledHeight() - 35);
         c.fill(baseX - 190, top, baseX + 190, bottom, 0xFF20262B);
-        c.fill(baseX + PLAYER_X, top + (int) playerY, baseX + PLAYER_X + PLAYER_SIZE, top + (int) playerY + PLAYER_SIZE, 0xFF55CC88);
+        int playerRenderY = top + (int) Math.round(playerY - TOP);
+        c.fill(baseX + PLAYER_X, playerRenderY, baseX + PLAYER_X + PLAYER_SIZE, playerRenderY + PLAYER_SIZE, 0xFF55CC88);
         for (Pipe p : pipes) {
             int x = baseX + (int) p.x();
-            c.fill(x, top, x + PIPE_WIDTH, top + p.gapTop() - TOP, 0xFF3F9B76);
-            int lowerY = top + p.gapTop() - TOP + GAP;
+            int gapRenderTop = top + p.gapTop() - TOP;
+            c.fill(x, top, x + PIPE_WIDTH, gapRenderTop, 0xFF3F9B76);
+            int lowerY = gapRenderTop + GAP;
             c.fill(x, lowerY, x + PIPE_WIDTH, bottom, 0xFF3F9B76);
         }
     }
