@@ -12,6 +12,7 @@ import com.gafipro.minigames.game.board.ReversiGame;
 import com.gafipro.minigames.game.board.RockPaperScissorsGame;
 import com.gafipro.minigames.game.board.TicTacToeGame;
 import com.gafipro.minigames.game.endless.EndlessCollection;
+import com.gafipro.minigames.game.endless.PongGame;
 import com.gafipro.minigames.game.endless.SnakeGame;
 import com.gafipro.minigames.game.endless.TetrisGame;
 import com.gafipro.minigames.game.puzzle.Game2048;
@@ -65,7 +66,7 @@ public final class GameFactory {
             case "flappy_block" -> new EndlessCollection.FlappyBlock();
             case "falling_blocks" -> new TetrisGame();
             case "breakout" -> new EndlessCollection.Breakout();
-            case "pong" -> new EndlessCollection.Pong();
+            case "pong" -> new PongGame();
             case "frogger" -> new EndlessCollection.Frogger();
             case "avoider" -> new EndlessCollection.Avoider();
             case "tower_climber" -> new EndlessCollection.TowerClimber();
