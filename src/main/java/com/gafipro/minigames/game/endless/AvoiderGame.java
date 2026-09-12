@@ -39,6 +39,12 @@ public class AvoiderGame extends BaseGame {
         hazards.add(new Hazard(x, 48, vx, vy, 12 + random.nextInt(8)));
     }
 
+    private double playerY() {
+        int height = MinecraftClient.getInstance().getWindow().getScaledHeight();
+        int bottom = Math.max(100, Math.min(280, height - 25));
+        return Math.max(75, bottom - 55);
+    }
+
     @Override public void tick() {
         super.tick();
         if (finished || state != GameState.PLAYING) return;
@@ -66,8 +72,9 @@ public class AvoiderGame extends BaseGame {
     }
 
     protected boolean collides() {
+        double py = playerY();
         for (Hazard h : hazards) {
-            if (Math.abs(playerX - h.x()) < h.size() + 12 && Math.abs(235 - h.y()) < h.size() + 12) return true;
+            if (Math.abs(playerX - h.x()) < h.size() + 12 && Math.abs(py - h.y()) < h.size() + 12) return true;
         }
         return false;
     }
@@ -84,7 +91,7 @@ public class AvoiderGame extends BaseGame {
         int baseX = cx();
         int bottom = Math.max(100, Math.min(280, mc.getWindow().getScaledHeight() - 25));
         c.fill(baseX - 190, 70, baseX + 190, bottom, 0xFF20262B);
-        int playerY = Math.max(80, bottom - 55);
+        int playerY = (int) playerY();
         c.fill(baseX + (int) playerX - 10, playerY, baseX + (int) playerX + 10, playerY + 20, 0xFF55CC88);
         for (Hazard h : hazards) {
             int x = baseX + (int) h.x();
@@ -92,7 +99,7 @@ public class AvoiderGame extends BaseGame {
             if (x < baseX - 205 || x > baseX + 205 || y < 65 || y > bottom) continue;
             c.fill(x - h.size(), y - h.size(), x + h.size(), y + h.size(), 0xFFE74C3C);
         }
-        c.drawCenteredTextWithShadow(mc.textRenderer, net.minecraft.text.Text.literal("Score: " + score), baseX, Math.max(75, bottom + 7), 0xFFFFFFFF);
+        c.drawCenteredTextWithShadow(mc.textRenderer, net.minecraft.text.Text.literal("Score: " + score), baseX, Math.min(bottom + 7, mc.getWindow().getScaledHeight() - 10), 0xFFFFFFFF);
     }
 
     @Override public void keyPressed(int keyCode, int scanCode, int modifiers) {
