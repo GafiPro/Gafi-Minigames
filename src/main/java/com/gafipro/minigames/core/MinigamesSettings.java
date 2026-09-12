@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -65,8 +66,8 @@ public final class MinigamesSettings {
     public static synchronized boolean favorite(String id){load();return favorites.contains(id);}
     public static synchronized void toggleFavorite(String id){load();if(!favorites.add(id))favorites.remove(id);save();}
     public static synchronized void touchRecent(String id){load();recent.remove(id);recent.add(id);while(recent.size()>8)recent.remove(recent.iterator().next());save();}
-    public static synchronized Set<String> recent(){load();return Set.copyOf(new LinkedHashSet<>(recent));}
-    public static synchronized Set<String> favorites(){load();return Set.copyOf(new HashSet<>(favorites));}
+    public static synchronized Set<String> recent(){load();return Collections.unmodifiableSet(new LinkedHashSet<>(recent));}
+    public static synchronized Set<String> favorites(){load();return Collections.unmodifiableSet(new HashSet<>(favorites));}
     public static void resetStats(){GameStats.reset();}
 
     public static synchronized void save(){
