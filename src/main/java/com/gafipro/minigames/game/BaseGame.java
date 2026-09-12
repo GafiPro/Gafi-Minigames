@@ -23,19 +23,24 @@ public abstract class BaseGame implements Game {
     private long pausedAtNanos;
     private long pausedTotalNanos;
 
-    @Override
-    public void start() {
-        state = GameState.PLAYING;
+    /** Starts a fresh game and guarantees the base lifecycle is reset even when subclasses override start(). */
+    public final void begin() {
+        state = GameState.READY;
         finished = false;
         won = false;
         recorded = false;
         score = 0;
         ticks = 0;
+        status = "";
         startedNanos = System.nanoTime();
         pausedAtNanos = 0L;
         pausedTotalNanos = 0L;
         metrics.score(0).moves(0).combo(0).streak(0).level(0).mistakes(0).accuracyPercent(100).elapsedNanos(0);
+        start();
+        state = finished ? (won ? GameState.WON : GameState.LOST) : GameState.PLAYING;
     }
+
+    @Override public void start() { }
 
     @Override
     public void tick() {
