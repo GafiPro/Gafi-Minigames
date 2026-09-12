@@ -1,53 +1,97 @@
 package com.gafipro.minigames.game.arcade;
 
 import com.gafipro.minigames.game.BaseGame;
+import com.gafipro.minigames.game.GameState;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import org.lwjgl.glfw.GLFW;
 
-import java.util.concurrent.ThreadLocalRandom;
-
+/** Fixed-duration Whack-A-Mole with monotonic deadlines and explicit accuracy tracking. */
 public final class WhackAMoleGame extends BaseGame {
-    private int target = 0;
+    private int target;
     private int hits;
     private int misses;
-    private int rounds;
-    private int timer;
+    private long targetUntilNanos;
+    private long endNanos;
 
     @Override public String id() { return "whack_a_mole"; }
     @Override public String title() { return "Whack-A-Mole"; }
     @Override public String category() { return "Arcade"; }
-    @Override public void start() { nextTarget(); }
+
+    @Override public void start() {
+        target = random.nextInt(12);
+        hits = 0;
+        misses = 0;
+        endNanos = System.nanoTime() + 20_000_000_000L;
+        nextTarget();
+        status = "Hit the mole before it moves.";
+    }
+
+    private void nextTarget() {
+        target = random.nextInt(12);
+        targetUntilNanos = System.nanoTime() + 250_000_000L + random.nextLong(350_000_001L);
+    }
+
+    private void miss() {
+        misses++;
+        updateAccuracy();
+    }
+
+    private void updateAccuracy() {
+        int attempts = hits + misses;
+        metrics.accuracyPercent(attempts == 0 ? 100 : hits * 100.0 / attempts);
+    }
+
     @Override public void tick() {
-        ticks++;
-        timer--;
-        if (timer <= 0) {
-            misses++;
+        super.tick();
+        if (finished || state != GameState.PLAYING) return;
+        long now = System.nanoTime();
+        if (now >= endNanos) {
+            score = Math.max(0, hits * 100 - misses * 15);
+            finishWin(score);
+            return;
+        }
+        if (now >= targetUntilNanos) {
+            miss();
             nextTarget();
         }
-        if (rounds >= 25) finish(hits * 10 - misses * 2);
     }
-    private void nextTarget() {
-        target = ThreadLocalRandom.current().nextInt(0, 27);
-        timer = Math.max(7, 18 - rounds / 4);
-        rounds++;
-    }
-    @Override public void render(DrawContext c, int mouseX, int mouseY, float delta) {
-        var mc=net.minecraft.client.MinecraftClient.getInstance(); var tr=mc.textRenderer; int cx=mc.getWindow().getScaledWidth()/2;
-        drawHeader(c,"WHACK-A-MOLE","Hit the mole before it moves • Round "+Math.min(rounds,25)+"/25");
-        int sx=cx-117, sy=78, s=76, gap=6;
-        for(int i=0;i<27;i++){
-            int col=i%9,row=i/9,x=sx+col*(12+gap),y=sy+row*(32+gap);
-            // 9 columns keep the board compact inside the generic game panel.
-            c.fill(x,y,x+s/2,y+s/2, i==target ? 0xFF55C7FF : 0xFF343A40);
-            if(i==target) c.drawCenteredTextWithShadow(tr,Text.literal("●").formatted(Formatting.GOLD),x+s/4,y+10,0xFFFFFFFF);
+
+    @Override public boolean mouseClicked(double mx, double my, int button) {
+        if (button != 0 || finished) return true;
+        int cell = 55, ox = cx() - 110, oy = 85;
+        int x = (int) ((mx - ox) / cell), y = (int) ((my - oy) / cell);
+        if (x < 0 || y < 0 || x >= 4 || y >= 3) return true;
+        if (y * 4 + x == target) {
+            hits++;
+            score = hits * 100 - misses * 15;
+            markMove();
+            nextTarget();
+        } else {
+            miss();
+            score = Math.max(0, hits * 100 - misses * 15);
         }
-        c.drawTextWithShadow(tr,Text.literal("Hits: "+hits+"   Misses: "+misses+"   Score: "+Math.max(0,hits*10-misses*2)),cx-105,184,0xFFFFFFFF);
-    }
-    @Override public boolean mouseClicked(double mx,double my,int button){
-        if(button!=0)return true; int cx=net.minecraft.client.MinecraftClient.getInstance().getWindow().getScaledWidth()/2;
-        int sx=cx-117,sy=78,s=76,gap=6;
-        for(int i=0;i<27;i++){int col=i%9,row=i/9,x=sx+col*(12+gap),y=sy+row*(32+gap);if(inside(mx,my,x,y,s/2,s/2)){if(i==target){hits++;nextTarget();}else{misses++;}return true;}}
+        status = "Hit the mole before it moves • Hits: " + hits + " • Misses: " + misses;
         return true;
     }
+
+    @Override public void render(DrawContext c, int mouseX, int mouseY, float delta) {
+        MinecraftClient mc = MinecraftClient.getInstance();
+        long remaining = Math.max(0, (endNanos - System.nanoTime()) / 1_000_000_000L);
+        drawHeader(c, "WHACK-A-MOLE", "Hits: " + hits + " • Misses: " + misses + " • Time: " + remaining + "s");
+        int cell = 55, ox = cx() - 110, oy = 85;
+        for (int i = 0; i < 12; i++) {
+            int x = ox + (i % 4) * cell, y = oy + (i / 4) * cell;
+            c.fill(x + 2, y + 2, x + cell - 2, y + cell - 2, 0xFF333B43);
+            if (i == target) {
+                c.fill(x + 12, y + 12, x + cell - 12, y + cell - 12, 0xFFE4A23B);
+                c.drawCenteredTextWithShadow(mc.textRenderer, Text.literal("●").formatted(Formatting.GOLD), x + cell / 2, y + 14, 0xFFFFFFFF);
+            }
+        }
+        c.drawCenteredTextWithShadow(mc.textRenderer, Text.literal("Score: " + Math.max(0, score)), cx(), 270, 0xFFFFFFFF);
+    }
+
+    @Override public void keyPressed(int keyCode, int scanCode, int modifiers) { if (keyCode == GLFW.GLFW_KEY_R) begin(); }
 }
