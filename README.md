@@ -1,63 +1,55 @@
 # Gafi Minigames
 
-Gafi Minigames is a lightweight client-side Fabric mod for Minecraft 1.21.11 that turns a normal Minecraft client into a small arcade of classic, puzzle, reflex and endless games.
+Gafi Minigames is a lightweight client-side Fabric mod for Minecraft 1.21.11 that turns a normal Minecraft client into an arcade of reflex, puzzle, board and endless games.
 
-## Current platform
+## Platform
 
 - Minecraft 1.21.11
-- Fabric Loader
-- Fabric API
+- Fabric Loader + Fabric API
 - Java 21
 - Client-side mod
-- `/games` opens the arcade
-- All player-facing text is written in English
+- `/games` opens the launcher
+- Player-facing game text is in English
 
-## Games
+## Game catalog
 
-### Arcade
+### Arcade (11)
 Reaction Test, Whack-A-Mole, Color Rush, Pattern Copy, Fast Click, Safe Tile, Target Practice, Math Rush, Word Scramble, Typing Speed, Simon Says.
 
-### Puzzle
-Minesweeper, 2048, 2048 Extreme, Sudoku, Sliding Puzzle, Lights Out, Nonogram, Word Search, Match-3, Maze, Spot the Difference, Sequence Memory, Memory Match.
+### Puzzle (12)
+Minesweeper, 2048, 2048 Extreme, Sudoku, Sliding Puzzle, Lights Out, Nonogram, Word Search, Match-3, Maze, Spot the Difference, Sequence Memory.
 
-### Board
+### Board (11)
 Tic-Tac-Toe, Connect Four, Rock Paper Scissors, Battleship, Chess, Checkers, Dots and Boxes, Four-in-a-Row Mini, Reversi / Othello, Gomoku, Hangman.
 
-### Endless
+### Endless (10)
 Snake, Dino Run, Flappy Block, Falling Blocks, Breakout, Pong, Frogger, Avoider, Tower Climber, Endless Dodger.
+
+The catalog contains 44 games. `GameCatalog` is the launcher source of truth and `GameFactory` routes every catalog ID to the corresponding engine.
 
 ## Controls
 
-`/games` opens the launcher. Inside games, `R` restarts and `Esc` exits. Individual games show their controls in the interface and support mouse and/or keyboard input as appropriate.
+`/games` opens the launcher. `R` restarts the current game and `Esc` exits back to the launcher. Each game displays its own keyboard and/or mouse controls.
 
 ## Singleplayer
 
-Games run entirely on the client and never open or replace the player's actual Minecraft inventory. Local progress and statistics are stored in the Minecraft config directory.
+Games run locally and do not replace the player's Minecraft inventory. Statistics are stored in the Minecraft config directory.
 
 ## Multiplayer
 
-The project contains a generic multiplayer/session layer and a working invite transport for servers that expose `/msg` or an equivalent private-message command. The transport is deliberately lightweight: protocol messages are encoded and sent through private chat, so no external account or service is required.
+The mod includes shared PvP/session screens and a `/msg`-based invite transport for servers that expose private messaging. Current PvP screens cover Tic-Tac-Toe, Connect Four and Rock Paper Scissors.
 
-Example command:
+This transport is not server-authoritative or cryptographically secure. A client-only Fabric mod cannot enforce authoritative custom game state on an arbitrary vanilla server through ordinary chat. Competitive integrity therefore depends on the server transport available to both clients.
 
-```text
-/games invite PlayerName
-```
-
-The long-term authoritative networking path is designed around a small optional server companion using Fabric custom payloads. A plain client-only mod cannot guarantee server-authoritative custom packets through an arbitrary vanilla server. Competitive integrity therefore depends on the transport available on the server.
-
-Current PvP screens include Tic-Tac-Toe, Connect Four and Rock Paper Scissors. The multiplayer framework is intentionally shared rather than duplicating networking code in every game.
+Hidden-information games such as Battleship remain local unless a future server companion provides a privacy-preserving protocol.
 
 ## Statistics
 
-Local statistics include games played, wins, losses, draws, best score, current streak and best streak where applicable. Statistics survive Minecraft restarts.
+Per-game persistent statistics include games played, wins, losses, draws, best score, current streak, best streak, best time, highest level and average accuracy where applicable. Statistics are saved through a temporary file and atomic replacement when supported, with a safe fallback for filesystems that do not provide atomic moves.
 
-## Configuration
+## Word data
 
-The config directory contains:
-
-- `gafi-minigames.json` for statistics
-- `gafi-minigames-settings.json` for favorites, recent games and display/audio preferences
+Word Scramble, Word Search, Hangman and Typing Speed use the shared embedded Minecraft-safe word bank in `src/main/resources/data/gafi-minigames/words.txt`.
 
 ## Build
 
@@ -67,12 +59,14 @@ Use Java 21 and run:
 gradle clean build --no-daemon --max-workers=1
 ```
 
-GitHub Actions performs the same remapped build and keeps the generated artifact for 3 days.
+GitHub Actions runs the same remapped build and keeps the generated JAR artifact for 3 days.
 
 ## Development
 
-Game logic is organized into reusable collections and a shared `Game` / `BaseGame` lifecycle. The catalog and factory are centralized so adding another game does not require duplicating launcher logic.
+Game behavior is built around the shared `Game` / `BaseGame` lifecycle, `GameState`, metrics and persistent statistics. Large rule-heavy or real-time games use dedicated engine classes, while smaller games that share a simple structure remain grouped in focused collections.
+
+Deterministic JUnit tests cover catalog/factory synchronization and representative core rules including 2048 merge semantics and Connect Four win detection.
 
 ## Known limitations
 
-This is an active development project. Some deeper board-game rules and the full authoritative server-side multiplayer companion remain on the roadmap. The mod should never present a client-only approximation as server-authoritative security.
+The mod is client-side. The multiplayer layer is a chat transport rather than a server-authoritative protocol. Expanding authoritative multiplayer requires a compatible optional server companion using a custom payload protocol; the client does not claim otherwise.
