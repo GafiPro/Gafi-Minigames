@@ -37,8 +37,23 @@ import com.gafipro.minigames.game.puzzle.SpotDifferenceGame;
 import com.gafipro.minigames.game.puzzle.SudokuGame;
 import com.gafipro.minigames.game.puzzle.WordSearchGame;
 
+import java.util.Set;
+
 public final class GameFactory {
+    private static final Set<String> SUPPORTED_IDS = Set.of(
+        "reaction_test","whack_a_mole","color_rush","pattern_copy","fast_click","safe_tile",
+        "target_practice","math_rush","word_scramble","typing_speed","simon_says","minesweeper",
+        "2048","2048_extreme","sudoku","sliding_puzzle","lights_out","nonogram","word_search",
+        "match_3","maze","spot_difference","sequence_memory","tic_tac_toe","connect_four",
+        "rock_paper_scissors","battleship","chess","checkers","dots_and_boxes","four_in_row_mini",
+        "reversi","gomoku","hangman","snake","dino_run","flappy_block","falling_blocks",
+        "breakout","pong","frogger","avoider","tower_climber","endless_dodger"
+    );
+
     private GameFactory() {}
+
+    public static Set<String> supportedIds() { return SUPPORTED_IDS; }
+
     public static Game create(String id) {
         return switch (id) {
             case "reaction_test" -> new ReactionTestGame();
