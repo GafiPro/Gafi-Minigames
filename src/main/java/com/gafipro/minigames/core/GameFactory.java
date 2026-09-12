@@ -26,10 +26,16 @@ import com.gafipro.minigames.game.endless.SnakeGame;
 import com.gafipro.minigames.game.endless.TetrisGame;
 import com.gafipro.minigames.game.endless.TowerClimberGame;
 import com.gafipro.minigames.game.puzzle.Game2048;
+import com.gafipro.minigames.game.puzzle.LightsOutGame;
+import com.gafipro.minigames.game.puzzle.Match3Game;
 import com.gafipro.minigames.game.puzzle.MazeGame;
 import com.gafipro.minigames.game.puzzle.MinesweeperGame;
-import com.gafipro.minigames.game.puzzle.PuzzleCollection;
+import com.gafipro.minigames.game.puzzle.NonogramGame;
+import com.gafipro.minigames.game.puzzle.SequenceMemoryGame;
+import com.gafipro.minigames.game.puzzle.SlidingPuzzleGame;
+import com.gafipro.minigames.game.puzzle.SpotDifferenceGame;
 import com.gafipro.minigames.game.puzzle.SudokuGame;
+import com.gafipro.minigames.game.puzzle.WordSearchGame;
 
 public final class GameFactory {
     private GameFactory() {}
@@ -50,14 +56,14 @@ public final class GameFactory {
             case "2048" -> new Game2048();
             case "2048_extreme" -> new Game2048(true);
             case "sudoku" -> new SudokuGame();
-            case "sliding_puzzle" -> new PuzzleCollection.SlidingPuzzle();
-            case "lights_out" -> new PuzzleCollection.LightsOut();
-            case "nonogram" -> new PuzzleCollection.Nonogram();
-            case "word_search" -> new PuzzleCollection.WordSearch();
-            case "match_3" -> new PuzzleCollection.Match3();
+            case "sliding_puzzle" -> new SlidingPuzzleGame();
+            case "lights_out" -> new LightsOutGame();
+            case "nonogram" -> new NonogramGame();
+            case "word_search" -> new WordSearchGame();
+            case "match_3" -> new Match3Game();
             case "maze" -> new MazeGame();
-            case "spot_difference" -> new PuzzleCollection.SpotDifference();
-            case "sequence_memory" -> new PuzzleCollection.SequenceMemory();
+            case "spot_difference" -> new SpotDifferenceGame();
+            case "sequence_memory" -> new SequenceMemoryGame();
             case "tic_tac_toe" -> new TicTacToeGame();
             case "connect_four" -> new ConnectFourGame();
             case "rock_paper_scissors" -> new RockPaperScissorsGame();
