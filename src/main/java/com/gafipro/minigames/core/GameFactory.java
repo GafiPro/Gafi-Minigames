@@ -11,6 +11,7 @@ import com.gafipro.minigames.game.puzzle.Game2048;
 import com.gafipro.minigames.game.puzzle.MemoryMatchGame;
 import com.gafipro.minigames.game.puzzle.MinesweeperGame;
 import com.gafipro.minigames.game.puzzle.PuzzleCollection;
+import com.gafipro.minigames.game.puzzle.SudokuGame;
 
 public final class GameFactory {
     private GameFactory() {}
@@ -31,7 +32,7 @@ public final class GameFactory {
             case "minesweeper" -> new MinesweeperGame();
             case "2048" -> new Game2048();
             case "2048_extreme" -> new Game2048(true);
-            case "sudoku" -> new PuzzleCollection.Sudoku();
+            case "sudoku" -> new SudokuGame();
             case "sliding_puzzle" -> new PuzzleCollection.SlidingPuzzle();
             case "lights_out" -> new PuzzleCollection.LightsOut();
             case "nonogram" -> new PuzzleCollection.Nonogram();
