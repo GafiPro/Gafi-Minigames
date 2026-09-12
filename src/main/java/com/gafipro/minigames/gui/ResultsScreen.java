@@ -2,7 +2,6 @@ package com.gafipro.minigames.gui;
 
 import com.gafipro.minigames.core.GameFactory;
 import com.gafipro.minigames.core.GameStats;
-import com.gafipro.minigames.core.GameCatalog;
 import com.gafipro.minigames.game.BaseGame;
 import com.gafipro.minigames.game.Game;
 import com.gafipro.minigames.game.GameState;
@@ -21,30 +20,21 @@ public final class ResultsScreen extends Screen {
 
     public ResultsScreen(Screen parent, Game game) { super(Text.literal("Results")); this.parent = parent; this.game = game; }
 
-    private GameCatalog.Entry catalogEntry() {
-        return GameCatalog.all().stream().filter(e -> e.id().equals(game.id())).findFirst().orElse(null);
-    }
-
-    private boolean isTimeFocused() {
-        return game.id().equals("reaction_test") || game.id().equals("typing_speed");
-    }
-
-    private boolean isAccuracyFocused() {
-        return game.id().equals("color_rush") || game.id().equals("typing_speed") || game.id().equals("hangman") || game.id().equals("whack_a_mole");
-    }
+    private boolean isTimeFocused() { return game.id().equals("reaction_test") || game.id().equals("typing_speed"); }
+    private boolean isAccuracyFocused() { return game.id().equals("color_rush") || game.id().equals("typing_speed") || game.id().equals("hangman") || game.id().equals("whack_a_mole"); }
 
     @Override public void render(DrawContext c, int mx, int my, float d) {
         renderInGameBackground(c);
         int x = width / 2, y = height / 2 - 80;
         c.fill(x - 190, y - 105, x + 190, y + 155, 0xFF20262D);
         GameState state = game instanceof BaseGame bg ? bg.state() : null;
-        String headline = switch (state) {
+        String headline = state == null ? "RESULTS" : switch (state) {
             case WON -> "YOU WIN";
             case DRAW -> "DRAW";
             case LOST -> "GAME OVER";
             default -> "RESULTS";
         };
-        int headlineColor = state == GameState.WON ? 0xFF55DD88 : state == GameState.DRAW ? 0xFFFFCC55 : 0xFFFF8888;
+        int headlineColor = state == GameState.WON ? 0xFF55DD88 : state == GameState.DRAW ? 0xFFFFCC55 : state == GameState.LOST ? 0xFFFF8888 : 0xFFFFFFFF;
         c.drawCenteredTextWithShadow(textRenderer, Text.literal(headline).formatted(Formatting.BOLD), x, y - 74, headlineColor);
         c.drawCenteredTextWithShadow(textRenderer, Text.literal(game.title()).formatted(Formatting.BOLD), x, y - 53, 0xFFFFFFFF);
 
@@ -64,11 +54,11 @@ public final class ResultsScreen extends Screen {
             c.drawCenteredTextWithShadow(textRenderer, Text.literal("Score: " + game.score()), x, line, 0xFFFFCC55); line += 19;
         }
 
-        StringBuilder lifetime = new StringBuilder("Games: ").append(GameStats.games(game.id()))
-                .append(" • Wins: ").append(GameStats.wins(game.id()))
-                .append(" • Losses: ").append(GameStats.losses(game.id()))
-                .append(" • Draws: ").append(GameStats.draws(game.id()));
-        c.drawCenteredTextWithShadow(textRenderer, Text.literal(lifetime.toString()), x, y + 73, 0xFFAAAAAA);
+        String lifetime = "Games: " + GameStats.games(game.id())
+                + " • Wins: " + GameStats.wins(game.id())
+                + " • Losses: " + GameStats.losses(game.id())
+                + " • Draws: " + GameStats.draws(game.id());
+        c.drawCenteredTextWithShadow(textRenderer, Text.literal(lifetime), x, y + 73, 0xFFAAAAAA);
 
         StringBuilder records = new StringBuilder();
         if (isTimeFocused()) records.append("Best time: ").append(formatTime(GameStats.bestTime(game.id())));
@@ -88,9 +78,7 @@ public final class ResultsScreen extends Screen {
         return minutes > 0 ? String.format("%02d:%02d", minutes, seconds) : String.format("%.2fs", millis / 1000.0);
     }
 
-    private void replay() {
-        MinecraftClient.getInstance().setScreen(new GameScreen(parent, GameFactory.create(game.id())));
-    }
+    private void replay() { MinecraftClient.getInstance().setScreen(new GameScreen(parent, GameFactory.create(game.id()))); }
 
     @Override public boolean keyPressed(KeyInput input) {
         int key = input.key();
