@@ -52,5 +52,13 @@ public final class GameCatalog {
         e("tower_climber","Tower Climber",Category.ENDLESS,"Climb higher platforms without falling.",false,false,true,"C2"),
         e("endless_dodger","Endless Dodger",Category.ENDLESS,"Survive an accelerating hazard field.",false,false,true,"E2")
     );}
+    public static String displayCategory(Category category) {
+        return switch (category) {
+            case ARCADE -> "Arcade";
+            case PUZZLE -> "Puzzle";
+            case BOARD -> "Board";
+            case ENDLESS -> "Endless";
+        };
+    }
     private static Entry e(String id,String title,Category category,String description,boolean ai,boolean pvp,boolean leaderboard,String key){return new Entry(id,title,category,description,ai,pvp,leaderboard,key);}
 }
