@@ -2,6 +2,7 @@ package com.gafipro.minigames.core;
 
 import com.gafipro.minigames.game.Game;
 import com.gafipro.minigames.game.arcade.ArcadeCollection;
+import com.gafipro.minigames.game.board.BattleshipGame;
 import com.gafipro.minigames.game.board.BoardCollection;
 import com.gafipro.minigames.game.board.CheckersGame;
 import com.gafipro.minigames.game.board.ChessGame;
@@ -51,7 +52,7 @@ public final class GameFactory {
             case "tic_tac_toe" -> new TicTacToeGame();
             case "connect_four" -> new ConnectFourGame();
             case "rock_paper_scissors" -> new RockPaperScissorsGame();
-            case "battleship" -> new BoardCollection.Battleship();
+            case "battleship" -> new BattleshipGame();
             case "chess" -> new ChessGame();
             case "checkers" -> new CheckersGame();
             case "dots_and_boxes" -> new BoardCollection.DotsAndBoxes();
