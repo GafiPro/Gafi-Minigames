@@ -14,7 +14,7 @@ public final class ReversiGame extends BaseGame {
     private final int[][] board=new int[N][N];
     private boolean whiteTurn=true; private Difficulty difficulty=Difficulty.NORMAL; private int aiDelay;
     private enum Difficulty{EASY,NORMAL,HARD} private record Move(int r,int c){}
-    @Override public String id(){return "reversi";} @Override public String title(){return "Reversi";} @Override public String category(){return "Board";}
+    @Override public String id(){return "reversi";} @Override public String title(){return "Reversi / Othello";} @Override public String category(){return "Board";}
     @Override public void start(){for(int r=0;r<N;r++)for(int c=0;c<N;c++)board[r][c]=0;board[3][3]=B;board[3][4]=W;board[4][3]=W;board[4][4]=B;whiteTurn=true;aiDelay=4;status="Normal • White to move • 1 Easy  2 Normal  3 Hard";}
     @Override public void tick(){super.tick();if(!finished&&!whiteTurn&&--aiDelay<=0)aiMove();}
     private void aiMove(){List<Move> ms=legal(B);if(ms.isEmpty()){passOrEnd();return;}Move m=choose(ms);place(m,B);markMove();whiteTurn=true;resolve();if(!finished)aiDelay=difficulty==Difficulty.HARD?2:4;}
