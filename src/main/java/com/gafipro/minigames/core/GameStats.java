@@ -33,43 +33,63 @@ public final class GameStats {
         if (!Files.exists(FILE)) return;
         try {
             JsonObject root = JsonParser.parseString(Files.readString(FILE, StandardCharsets.UTF_8)).getAsJsonObject();
-            readInt(root, "games", games);
-            readInt(root, "wins", wins);
-            readInt(root, "losses", losses);
-            readInt(root, "draws", draws);
-            readInt(root, "best", best);
-            readInt(root, "streak", streak);
-            readInt(root, "bestStreak", bestStreak);
-            readInt(root, "highestLevel", highestLevel);
+            readInt(root, "games", games, false);
+            readInt(root, "wins", wins, false);
+            readInt(root, "losses", losses, false);
+            readInt(root, "draws", draws, false);
+            readInt(root, "best", best, true);
+            readInt(root, "streak", streak, false);
+            readInt(root, "bestStreak", bestStreak, false);
+            readInt(root, "highestLevel", highestLevel, true);
             readLong(root, "bestTime", bestTime);
             readDouble(root, "accuracy", accuracy);
+            sanitizeCounters();
         } catch (Exception e) {
             LOGGER.warn("Could not read statistics from {}. Existing in-memory values were preserved.", FILE, e);
         }
     }
 
-    private static void readInt(JsonObject root, String key, Map<String, Integer> target) {
+    private static void readInt(JsonObject root, String key, Map<String, Integer> target, boolean allowZeroOnly) {
         if (!root.has(key) || !root.get(key).isJsonObject()) return;
         root.getAsJsonObject(key).entrySet().forEach(entry -> {
-            try { target.put(entry.getKey(), entry.getValue().getAsInt()); }
-            catch (Exception e) { LOGGER.warn("Ignoring invalid integer statistic '{}' in '{}'.", entry.getKey(), key); }
+            try {
+                int value = entry.getValue().getAsInt();
+                if (value >= 0) target.put(entry.getKey(), Math.max(0, value));
+                else LOGGER.warn("Ignoring negative integer statistic '{}' in '{}'.", entry.getKey(), key);
+            } catch (Exception e) { LOGGER.warn("Ignoring invalid integer statistic '{}' in '{}'.", entry.getKey(), key); }
         });
     }
 
     private static void readLong(JsonObject root, String key, Map<String, Long> target) {
         if (!root.has(key) || !root.get(key).isJsonObject()) return;
         root.getAsJsonObject(key).entrySet().forEach(entry -> {
-            try { target.put(entry.getKey(), entry.getValue().getAsLong()); }
-            catch (Exception e) { LOGGER.warn("Ignoring invalid long statistic '{}' in '{}'.", entry.getKey(), key); }
+            try {
+                long value = entry.getValue().getAsLong();
+                if (value >= 0) target.put(entry.getKey(), value);
+                else LOGGER.warn("Ignoring negative long statistic '{}' in '{}'.", entry.getKey(), key);
+            } catch (Exception e) { LOGGER.warn("Ignoring invalid long statistic '{}' in '{}'.", entry.getKey(), key); }
         });
     }
 
     private static void readDouble(JsonObject root, String key, Map<String, Double> target) {
         if (!root.has(key) || !root.get(key).isJsonObject()) return;
         root.getAsJsonObject(key).entrySet().forEach(entry -> {
-            try { target.put(entry.getKey(), entry.getValue().getAsDouble()); }
-            catch (Exception e) { LOGGER.warn("Ignoring invalid decimal statistic '{}' in '{}'.", entry.getKey(), key); }
+            try {
+                double value = entry.getValue().getAsDouble();
+                if (Double.isFinite(value) && value >= 0.0 && value <= 100.0) target.put(entry.getKey(), value);
+                else LOGGER.warn("Ignoring out-of-range accuracy statistic '{}' in '{}'.", entry.getKey(), key);
+            } catch (Exception e) { LOGGER.warn("Ignoring invalid decimal statistic '{}' in '{}'.", entry.getKey(), key); }
         });
+    }
+
+    private static void sanitizeCounters() {
+        wins.replaceAll((id, value) -> Math.min(value, games.getOrDefault(id, value)));
+        losses.replaceAll((id, value) -> Math.min(value, games.getOrDefault(id, value)));
+        draws.replaceAll((id, value) -> Math.min(value, games.getOrDefault(id, value)));
+        streak.replaceAll((id, value) -> Math.min(value, wins.getOrDefault(id, value)));
+        bestStreak.replaceAll((id, value) -> Math.max(0, value));
+        highestLevel.replaceAll((id, value) -> Math.max(0, value));
+        best.replaceAll((id, value) -> Math.max(0, value));
     }
 
     public static int games(String id) { load(); return games.getOrDefault(id, 0); }
@@ -102,7 +122,7 @@ public final class GameStats {
         best.merge(id, Math.max(0, score), Math::max);
         if (elapsedMillis > 0) bestTime.merge(id, elapsedMillis, (old, value) -> old == 0 ? value : Math.min(old, value));
         if (level > 0) highestLevel.merge(id, level, Math::max);
-        if (accuracyPercent >= 0 && accuracyPercent <= 100) {
+        if (Double.isFinite(accuracyPercent) && accuracyPercent >= 0 && accuracyPercent <= 100) {
             double old = accuracy.getOrDefault(id, -1.0);
             accuracy.put(id, old < 0 ? accuracyPercent : (old + accuracyPercent) / 2.0);
         }
