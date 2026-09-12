@@ -44,16 +44,42 @@ public final class Game2048 extends BaseGame {
         board[p[1]][p[0]] = random.nextInt(10) == 0 ? 4 : 2;
     }
 
-    private int[] sourceLine(int index, int direction) {
-        int[] line = new int[size];
+    private int[] sourceLine(int line, int direction) {
+        int[] values = new int[size];
         for (int i = 0; i < size; i++) {
-            int x = direction == 2 || direction == 3 ? index : i;
-            int y = direction == 0 || direction == 1 ? index : i;
-            if (direction == 1) y = size - 1 - i;
-            if (direction == 3) x = size - 1 - i;
-            line[i] = board[y][x];
+            int x = switch (direction) {
+                case 0, 1 -> line;
+                case 2 -> i;
+                case 3 -> size - 1 - i;
+                default -> throw new IllegalArgumentException("Invalid direction");
+            };
+            int y = switch (direction) {
+                case 0 -> i;
+                case 1 -> size - 1 - i;
+                case 2, 3 -> line;
+                default -> throw new IllegalArgumentException("Invalid direction");
+            };
+            values[i] = board[y][x];
         }
-        return line;
+        return values;
+    }
+
+    private void writeLine(int line, int direction, int[] values) {
+        for (int i = 0; i < size; i++) {
+            int x = switch (direction) {
+                case 0, 1 -> line;
+                case 2 -> i;
+                case 3 -> size - 1 - i;
+                default -> throw new IllegalArgumentException("Invalid direction");
+            };
+            int y = switch (direction) {
+                case 0 -> i;
+                case 1 -> size - 1 - i;
+                case 2, 3 -> line;
+                default -> throw new IllegalArgumentException("Invalid direction");
+            };
+            board[y][x] = values[i];
+        }
     }
 
     private int[] mergeLine(int[] source) {
@@ -76,25 +102,17 @@ public final class Game2048 extends BaseGame {
 
     private boolean playMove(int direction) {
         int[][] before = copyBoard(board);
-        for (int line = 0; line < size; line++) {
-            int[] merged = mergeLine(sourceLine(line, direction));
-            for (int i = 0; i < size; i++) {
-                int x = direction == 2 || direction == 3 ? line : i;
-                int y = direction == 0 || direction == 1 ? line : i;
-                if (direction == 1) y = size - 1 - i;
-                if (direction == 3) x = size - 1 - i;
-                board[y][x] = merged[i];
-            }
-        }
+        for (int line = 0; line < size; line++) writeLine(line, direction, mergeLine(sourceLine(line, direction)));
         boolean changed = !same(before, board);
         if (!changed) return false;
+
         spawn();
         if (!reachedGoal && containsGoal()) {
             reachedGoal = true;
-            status = "2048 reached! Keep going or press R to restart.";
+            status = continueAfterGoal ? "2048 reached! Keep going." : "2048 reached!";
             if (!continueAfterGoal) finishWin(points);
         }
-        if (!canMove()) finish(reachedGoal ? points : points);
+        if (!finished && !canMove()) finish(points);
         return true;
     }
 
@@ -149,10 +167,7 @@ public final class Game2048 extends BaseGame {
 
     @Override
     public void keyPressed(int key, int scan, int mod) {
-        if (key == GLFW.GLFW_KEY_R) {
-            begin();
-            return;
-        }
+        if (key == GLFW.GLFW_KEY_R) { begin(); return; }
         if (finished) return;
         int direction = switch (key) {
             case GLFW.GLFW_KEY_UP, GLFW.GLFW_KEY_W -> 0;
