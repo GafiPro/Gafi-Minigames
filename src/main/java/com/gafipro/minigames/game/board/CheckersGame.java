@@ -91,10 +91,12 @@ public final class CheckersGame extends BaseGame {
     private void applyJump(Jump j){int p=board[j.fr][j.fc];board[j.fr][j.fc]=0;if(j.cr>=0)board[j.cr][j.cc]=0;if(p==WHITE&&j.tr==0)p=WK;if(p==BLACK&&j.tr==7)p=BK;board[j.tr][j.tc]=p;}
 
     private void playHumanMove(Jump j){
+        int movingPiece=board[j.fr][j.fc];
+        boolean crowned=Math.abs(movingPiece)==1&&(j.tr==(movingPiece>0?0:7));
         applyJump(j);
         markMove();
         score+=j.cr>=0?100:10;
-        if(j.cr>=0 && Math.abs(board[j.tr][j.tc])==1 && ((board[j.tr][j.tc]==WHITE&&j.tr==0)||(board[j.tr][j.tc]==BLACK&&j.tr==7))) {
+        if(crowned){
             forcedR=forcedC=-1;whiteTurn=!whiteTurn;sr=sc=-1;resolve();return;
         }
         List<Jump> next=jumps(j.tr,j.tc,board[j.tr][j.tc]);
