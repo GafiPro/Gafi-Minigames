@@ -4,13 +4,14 @@ import com.gafipro.minigames.game.Game;
 import com.gafipro.minigames.game.arcade.ArcadeCollection;
 import com.gafipro.minigames.game.board.BoardCollection;
 import com.gafipro.minigames.game.endless.EndlessCollection;
-import com.gafipro.minigames.game.puzzle.PuzzleCollection;
+import com.gafipro.minigames.game.puzzle.Game2048;
 import com.gafipro.minigames.game.puzzle.MemoryMatchGame;
-
-import java.util.function.Supplier;
+import com.gafipro.minigames.game.puzzle.MinesweeperGame;
+import com.gafipro.minigames.game.puzzle.PuzzleCollection;
 
 public final class GameFactory {
     private GameFactory() {}
+
     public static Game create(String id) {
         return switch (id) {
             case "reaction_test" -> new ArcadeCollection.ReactionTest();
@@ -24,9 +25,9 @@ public final class GameFactory {
             case "word_scramble" -> new ArcadeCollection.WordScramble();
             case "typing_speed" -> new ArcadeCollection.TypingSpeed();
             case "simon_says" -> new ArcadeCollection.SimonSays();
-            case "minesweeper" -> new PuzzleCollection.Minesweeper();
-            case "2048" -> new PuzzleCollection.Game2048();
-            case "2048_extreme" -> new PuzzleCollection.Game2048(true);
+            case "minesweeper" -> new MinesweeperGame();
+            case "2048" -> new Game2048();
+            case "2048_extreme" -> new Game2048(true);
             case "sudoku" -> new PuzzleCollection.Sudoku();
             case "sliding_puzzle" -> new PuzzleCollection.SlidingPuzzle();
             case "lights_out" -> new PuzzleCollection.LightsOut();
@@ -36,6 +37,7 @@ public final class GameFactory {
             case "maze" -> new PuzzleCollection.Maze();
             case "spot_difference" -> new PuzzleCollection.SpotDifference();
             case "sequence_memory" -> new PuzzleCollection.SequenceMemory();
+            case "memory_match" -> new MemoryMatchGame();
             case "tic_tac_toe" -> new BoardCollection.TicTacToe();
             case "connect_four" -> new BoardCollection.ConnectFour();
             case "rock_paper_scissors" -> new BoardCollection.RockPaperScissors();
