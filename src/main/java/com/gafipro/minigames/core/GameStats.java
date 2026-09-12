@@ -105,7 +105,7 @@ public final class GameStats {
     public static synchronized void recordResult(String id, int score, boolean won, boolean draw, long elapsedMillis, int level, double accuracyPercent) {
         load();
         games.merge(id, 1, Integer::sum);
-        if (draw) draws.merge(id, 1, Integer::sum);
+        if (draw) { draws.merge(id, 1, Integer::sum); streak.put(id, 0); }
         else if (won) { wins.merge(id, 1, Integer::sum); int currentStreak = streak.merge(id, 1, Integer::sum); bestStreak.merge(id, currentStreak, Math::max); }
         else { losses.merge(id, 1, Integer::sum); streak.put(id, 0); }
         best.merge(id, Math.max(0, score), Math::max);
@@ -116,7 +116,7 @@ public final class GameStats {
         }
         save();
     }
-    public static synchronized void reset() { games.clear();wins.clear();losses.clear();draws.clear();best.clear();streak.clear();bestStreak.clear();highestLevel.clear();bestTime.clear();accuracy.clear();save(); }
+    public static synchronized void reset() { load(); games.clear();wins.clear();losses.clear();draws.clear();best.clear();streak.clear();bestStreak.clear();highestLevel.clear();bestTime.clear();accuracy.clear();save(); }
 
     private static void save() {
         try {
