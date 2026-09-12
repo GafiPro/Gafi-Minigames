@@ -7,7 +7,6 @@ import net.minecraft.client.gui.DrawContext;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /** Flappy-style endless game with fixed pipe gaps and continuous collision checks. */
@@ -63,19 +62,23 @@ public final class FlappyBlockGame extends BaseGame {
         playerY += velocity * dt;
         velocity += 18.5 * dt;
 
-        for (Iterator<Pipe> it = pipes.iterator(); it.hasNext();) {
-            Pipe p = it.next();
+        for (int i = pipes.size() - 1; i >= 0; i--) {
+            Pipe p = pipes.get(i);
             double x = p.x() - speed * dt;
-            if (x < -230) it.remove();
-            else {
-                boolean scored = p.scored() || x + PIPE_WIDTH < PLAYER_X;
-                if (!p.scored() && scored) score += 100;
-                if (overlapsPipe(x, p.gapTop())) finish(score);
-                if (p.scored() != scored) {
-                    it.remove();
-                    pipes.add(new Pipe(x, p.gapTop(), scored));
-                    break;
-                }
+            if (x < -230) {
+                pipes.remove(i);
+                continue;
+            }
+            if (!p.scored() && x + PIPE_WIDTH < PLAYER_X) {
+                score += 100;
+                pipes.set(i, new Pipe(x, p.gapTop(), true));
+                p = pipes.get(i);
+            } else if (x != p.x()) {
+                pipes.set(i, new Pipe(x, p.gapTop(), p.scored()));
+            }
+            if (overlapsPipe(x, p.gapTop())) {
+                finish(score);
+                return;
             }
         }
         if (now >= nextSpawnNanos) {
