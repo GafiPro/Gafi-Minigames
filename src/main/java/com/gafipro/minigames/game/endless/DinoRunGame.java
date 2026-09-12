@@ -1,13 +1,13 @@
 package com.gafipro.minigames.game.endless;
 
 import com.gafipro.minigames.game.BaseGame;
+import com.gafipro.minigames.game.GameState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /** Endless runner with monotonic timing, jump physics and collision-aware obstacles. */
@@ -25,7 +25,6 @@ public final class DinoRunGame extends BaseGame {
     private long lastNanos;
     private long nextSpawnNanos;
     private long runNanos;
-    private double distance;
 
     @Override public String id() { return "dino_run"; }
     @Override public String title() { return "Dino Run"; }
@@ -35,7 +34,6 @@ public final class DinoRunGame extends BaseGame {
         obstacles.clear();
         playerY = 0;
         velocityY = 0;
-        distance = 0;
         runNanos = 0;
         lastNanos = System.nanoTime();
         nextSpawnNanos = lastNanos + 900_000_000L;
@@ -44,14 +42,14 @@ public final class DinoRunGame extends BaseGame {
     }
 
     private void jump() {
-        if (finished || playerY != 0) return;
+        if (finished || state != GameState.PLAYING || playerY != 0) return;
         velocityY = JUMP_VELOCITY;
         markMove();
     }
 
     @Override public void tick() {
         super.tick();
-        if (finished || state() != com.gafipro.minigames.game.GameState.PLAYING) return;
+        if (finished || state != GameState.PLAYING) return;
         long now = System.nanoTime();
         double dt = Math.min(0.05, Math.max(0, (now - lastNanos) / 1_000_000_000.0));
         lastNanos = now;
@@ -65,14 +63,10 @@ public final class DinoRunGame extends BaseGame {
             velocityY = 0;
         }
 
-        for (Iterator<Obstacle> it = obstacles.iterator(); it.hasNext();) {
-            Obstacle o = it.next();
-            it.removeIf(v -> v == null);
-        }
         List<Obstacle> moved = new ArrayList<>(obstacles.size());
-        for (Obstacle o : obstacles) {
-            double x = o.x() - speed * dt;
-            if (x > -210) moved.add(new Obstacle(x, o.width(), o.height()));
+        for (Obstacle obstacle : obstacles) {
+            double x = obstacle.x() - speed * dt;
+            if (x > -210) moved.add(new Obstacle(x, obstacle.width(), obstacle.height()));
             else score += 5;
         }
         obstacles.clear();
@@ -87,7 +81,7 @@ public final class DinoRunGame extends BaseGame {
             metrics.level(1 + (int) (runNanos / 20_000_000_000L));
         }
 
-        if (runNanos / 100_000_000L > 0) score = Math.max(score, (int) (runNanos / 250_000_000L));
+        score = Math.max(score, (int) (runNanos / 250_000_000L));
         if (collides()) finish(score);
     }
 
