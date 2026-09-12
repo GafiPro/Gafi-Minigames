@@ -23,9 +23,11 @@ class CoreRuleValidationTest {
         for (GameCatalog.Entry entry : GameCatalog.all()) {
             assertTrue(ids.add(entry.id()), "duplicate catalog id: " + entry.id());
             Game game = assertDoesNotThrow(() -> GameFactory.create(entry.id()));
+            String actualCategory = game.category() == null ? "<null>" : game.category().trim().toUpperCase(Locale.ROOT);
+            System.err.println("CATALOG " + entry.id() + " expected=" + entry.category().name() + " actual=" + actualCategory);
             assertEquals(entry.id(), game.id(), "factory routed the wrong game for " + entry.id());
             assertEquals(entry.title(), game.title(), "factory title mismatch for " + entry.id());
-            assertEquals(entry.category().name(), game.category().trim().toUpperCase(Locale.ROOT), "factory category mismatch for " + entry.id() + " (actual='" + game.category() + "', expected='" + entry.category().name() + "')");
+            assertEquals(entry.category().name(), actualCategory, "factory category mismatch for " + entry.id());
         }
     }
 
