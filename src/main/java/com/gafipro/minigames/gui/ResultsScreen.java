@@ -2,6 +2,7 @@ package com.gafipro.minigames.gui;
 
 import com.gafipro.minigames.core.GameFactory;
 import com.gafipro.minigames.core.GameStats;
+import com.gafipro.minigames.core.GameCatalog;
 import com.gafipro.minigames.game.BaseGame;
 import com.gafipro.minigames.game.Game;
 import com.gafipro.minigames.game.GameState;
@@ -20,37 +21,72 @@ public final class ResultsScreen extends Screen {
 
     public ResultsScreen(Screen parent, Game game) { super(Text.literal("Results")); this.parent = parent; this.game = game; }
 
+    private GameCatalog.Entry catalogEntry() {
+        return GameCatalog.all().stream().filter(e -> e.id().equals(game.id())).findFirst().orElse(null);
+    }
+
+    private boolean isTimeFocused() {
+        return game.id().equals("reaction_test") || game.id().equals("typing_speed");
+    }
+
+    private boolean isAccuracyFocused() {
+        return game.id().equals("color_rush") || game.id().equals("typing_speed") || game.id().equals("hangman") || game.id().equals("whack_a_mole");
+    }
+
     @Override public void render(DrawContext c, int mx, int my, float d) {
         renderInGameBackground(c);
         int x = width / 2, y = height / 2 - 80;
-        c.fill(x - 175, y - 90, x + 175, y + 135, 0xFF20262D);
+        c.fill(x - 190, y - 105, x + 190, y + 155, 0xFF20262D);
         GameState state = game instanceof BaseGame bg ? bg.state() : null;
         String headline = switch (state) {
             case WON -> "YOU WIN";
             case DRAW -> "DRAW";
             case LOST -> "GAME OVER";
-            default -> game.score() > 0 ? "NICE RUN!" : "RESULTS";
+            default -> "RESULTS";
         };
         int headlineColor = state == GameState.WON ? 0xFF55DD88 : state == GameState.DRAW ? 0xFFFFCC55 : 0xFFFF8888;
-        c.drawCenteredTextWithShadow(textRenderer, Text.literal(headline).formatted(Formatting.BOLD), x, y - 62, headlineColor);
-        c.drawCenteredTextWithShadow(textRenderer, Text.literal(game.title()).formatted(Formatting.BOLD), x, y - 42, 0xFFFFFFFF);
+        c.drawCenteredTextWithShadow(textRenderer, Text.literal(headline).formatted(Formatting.BOLD), x, y - 74, headlineColor);
+        c.drawCenteredTextWithShadow(textRenderer, Text.literal(game.title()).formatted(Formatting.BOLD), x, y - 53, 0xFFFFFFFF);
+
+        int line = y - 25;
         if (game instanceof BaseGame bg) {
             var m = bg.metrics();
-            int line = y - 15;
-            if (m.score() > 0) { c.drawCenteredTextWithShadow(textRenderer, Text.literal("Score: " + m.score()), x, line, 0xFFFFCC55); line += 20; }
+            c.drawCenteredTextWithShadow(textRenderer, Text.literal("Score: " + m.score()), x, line, 0xFFFFCC55); line += 19;
             if (m.moves() > 0) { c.drawCenteredTextWithShadow(textRenderer, Text.literal("Moves: " + m.moves()), x, line, 0xFFBBBBBB); line += 18; }
-            if (m.elapsedMillis() > 0) { c.drawCenteredTextWithShadow(textRenderer, Text.literal("Time: " + formatTime(m.elapsedMillis())), x, line, 0xFFBBBBBB); line += 18; }
+            if (m.elapsedMillis() > 0) {
+                String label = game.id().equals("reaction_test") ? "Reaction time: " : "Time: ";
+                c.drawCenteredTextWithShadow(textRenderer, Text.literal(label + formatTime(m.elapsedMillis())), x, line, 0xFFBBBBBB); line += 18;
+            }
             if (m.level() > 0) { c.drawCenteredTextWithShadow(textRenderer, Text.literal("Level: " + m.level()), x, line, 0xFFBBBBBB); line += 18; }
             if (m.mistakes() > 0) { c.drawCenteredTextWithShadow(textRenderer, Text.literal("Mistakes: " + m.mistakes()), x, line, 0xFFBBBBBB); line += 18; }
-            if (m.accuracyPercent() < 100) { c.drawCenteredTextWithShadow(textRenderer, Text.literal("Accuracy: " + String.format("%.0f%%", (double) m.accuracyPercent())), x, line, 0xFFBBBBBB); }
+            if (isAccuracyFocused()) { c.drawCenteredTextWithShadow(textRenderer, Text.literal(String.format("Accuracy: %.0f%%", m.accuracyPercent())), x, line, 0xFFBBBBBB); line += 18; }
         } else {
-            c.drawCenteredTextWithShadow(textRenderer, Text.literal("Score: " + game.score()), x, y - 15, 0xFFFFCC55);
+            c.drawCenteredTextWithShadow(textRenderer, Text.literal("Score: " + game.score()), x, line, 0xFFFFCC55); line += 19;
         }
-        c.drawCenteredTextWithShadow(textRenderer, Text.literal("Games: " + GameStats.games(game.id()) + " • Wins: " + GameStats.wins(game.id()) + " • Best: " + GameStats.best(game.id())), x, y + 76, 0xFFAAAAAA);
-        c.drawCenteredTextWithShadow(textRenderer, Text.literal("R / Enter  Play again     Esc  Games"), x, y + 105, 0xFFFFFFFF);
+
+        StringBuilder lifetime = new StringBuilder("Games: ").append(GameStats.games(game.id()))
+                .append(" • Wins: ").append(GameStats.wins(game.id()))
+                .append(" • Losses: ").append(GameStats.losses(game.id()))
+                .append(" • Draws: ").append(GameStats.draws(game.id()));
+        c.drawCenteredTextWithShadow(textRenderer, Text.literal(lifetime.toString()), x, y + 73, 0xFFAAAAAA);
+
+        StringBuilder records = new StringBuilder();
+        if (isTimeFocused()) records.append("Best time: ").append(formatTime(GameStats.bestTime(game.id())));
+        else records.append("Best score: ").append(GameStats.best(game.id()));
+        records.append(" • Best streak: ").append(GameStats.bestStreak(game.id()));
+        if (GameStats.highestLevel(game.id()) > 0) records.append(" • Best level: ").append(GameStats.highestLevel(game.id()));
+        if (isAccuracyFocused()) records.append(String.format(" • Avg accuracy: %.0f%%", GameStats.accuracy(game.id())));
+        c.drawCenteredTextWithShadow(textRenderer, Text.literal(records.toString()), x, y + 91, 0xFF888888);
+        c.drawCenteredTextWithShadow(textRenderer, Text.literal("R / Enter  Play again     Esc  Games"), x, y + 123, 0xFFFFFFFF);
     }
 
-    private String formatTime(long millis) { long total = millis / 1000; return String.format("%02d:%02d", total / 60, total % 60); }
+    private String formatTime(long millis) {
+        if (millis <= 0) return "—";
+        long total = millis / 1000;
+        long minutes = total / 60;
+        long seconds = total % 60;
+        return minutes > 0 ? String.format("%02d:%02d", minutes, seconds) : String.format("%.2fs", millis / 1000.0);
+    }
 
     private void replay() {
         MinecraftClient.getInstance().setScreen(new GameScreen(parent, GameFactory.create(game.id())));
