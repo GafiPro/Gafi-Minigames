@@ -37,8 +37,8 @@ public final class Match3Game extends BaseGame {
     private boolean[][] findMatches(){
         boolean[][] remove=new boolean[SIZE][SIZE];
         for(int y=0;y<SIZE;y++)for(int x=0;x<SIZE;x++){
-            if(x< SIZE-2&&grid[x][y]>=0&&grid[x][y]==grid[x+1][y]&&grid[x][y]==grid[x+2][y]){int v=grid[x][y];for(int k=x;k<SIZE&&grid[k][y]==v;k++)remove[k][y]=true;}
-            if(y< SIZE-2&&grid[x][y]>=0&&grid[x][y]==grid[x][y+1]&&grid[x][y]==grid[x][y+2]){int v=grid[x][y];for(int k=y;k<SIZE&&grid[x][k]==v;k++)remove[x][k]=true;}
+            if(x<SIZE-2&&grid[x][y]>=0&&grid[x][y]==grid[x+1][y]&&grid[x][y]==grid[x+2][y]){int v=grid[x][y];for(int k=x;k<SIZE&&grid[k][y]==v;k++)remove[k][y]=true;}
+            if(y<SIZE-2&&grid[x][y]>=0&&grid[x][y]==grid[x][y+1]&&grid[x][y]==grid[x][y+2]){int v=grid[x][y];for(int k=y;k<SIZE&&grid[x][k]==v;k++)remove[x][k]=true;}
         }
         return remove;
     }
@@ -66,7 +66,7 @@ public final class Match3Game extends BaseGame {
         }
         return false;
     }
-    private boolean createsMatchAfterSwap(int x1,int y1,int x2,int y2){swap(x1,y1,x2,y2);boolean result=false;boolean[][] m=findMatches();for(boolean[] row:m)for(boolean v:row)if(v){result=true;break;}swap(x1,y1,x2,y2);return result;}
+    private boolean createsMatchAfterSwap(int x1,int y1,int x2,int y2){swap(x1,y1,x2,y2);boolean result=false;boolean[][] m=findMatches();outer:for(boolean[] row:m)for(boolean v:row)if(v){result=true;break outer;}swap(x1,y1,x2,y2);return result;}
     private void reshuffle(){do{fillWithoutMatches();}while(!hasPossibleMove());}
 
     @Override public boolean mouseClicked(double mx,double my,int button){
@@ -87,7 +87,7 @@ public final class Match3Game extends BaseGame {
     @Override public void render(DrawContext c,int mx,int my,float delta){
         MinecraftClient mc=MinecraftClient.getInstance();drawHeader(c,"MATCH-3",status+" • Score: "+score);
         int cell=Math.min(44,Math.max(26,(mc.getWindow().getScaledHeight()-135)/SIZE));int ox=cx()-SIZE*cell/2,oy=80;
-        for(int y=0;y<SIZE;y++)for(int x=0;x<SIZE;x++){int v=grid[x][y];c.fill(ox+x*cell+1,oy+y*cell+1,ox+x*cell+cell-2,oy+y*cell+cell-2,0xFF+((v*31+70)&255)<<16|((v*47+80)&255)<<8|((v*61+90)&255));if(x==selectedX&&y==selectedY)c.fill(ox+x*cell,oy+y*cell,ox+x*cell+cell,oy+y*cell+cell,0xFFFFFFFF);}
+        for(int y=0;y<SIZE;y++)for(int x=0;x<SIZE;x++){int v=grid[x][y];int r=(v*31+70)&255,g=(v*47+80)&255,b=(v*61+90)&255;int color=0xFF000000|(r<<16)|(g<<8)|b;c.fill(ox+x*cell+1,oy+y*cell+1,ox+x*cell+cell-2,oy+y*cell+cell-2,color);if(x==selectedX&&y==selectedY)c.fill(ox+x*cell,oy+y*cell,ox+x*cell+cell,oy+y*cell+cell,0xFFFFFFFF);}
     }
     @Override public void keyPressed(int key,int scan,int modifiers){if(key==GLFW.GLFW_KEY_R)begin();}
 }
