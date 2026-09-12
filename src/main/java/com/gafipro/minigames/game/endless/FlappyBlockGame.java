@@ -13,8 +13,8 @@ import java.util.List;
 public final class FlappyBlockGame extends BaseGame {
     private static final int PLAYER_X = -105;
     private static final int PLAYER_SIZE = 18;
-    private static final int TOP = 65;
-    private static final int BOTTOM = 245;
+    private static final int DEFAULT_TOP = 65;
+    private static final int DEFAULT_BOTTOM = 245;
     private static final int PIPE_WIDTH = 28;
     private static final int GAP = 66;
 
@@ -29,9 +29,17 @@ public final class FlappyBlockGame extends BaseGame {
     @Override public String title() { return "Flappy Block"; }
     @Override public String category() { return "Endless"; }
 
+    private int topY() {
+        return Math.max(50, Math.min(DEFAULT_TOP, MinecraftClient.getInstance().getWindow().getScaledHeight() - 190));
+    }
+
+    private int bottomY() {
+        return Math.min(DEFAULT_BOTTOM, MinecraftClient.getInstance().getWindow().getScaledHeight() - 35);
+    }
+
     @Override public void start() {
         pipes.clear();
-        playerY = 145;
+        playerY = (topY() + bottomY() - PLAYER_SIZE) / 2.0;
         velocity = 0;
         lastNanos = System.nanoTime();
         nextSpawnNanos = lastNanos + 850_000_000L;
@@ -41,8 +49,8 @@ public final class FlappyBlockGame extends BaseGame {
     }
 
     private void addPipe(double x) {
-        int span = BOTTOM - TOP - GAP - 8;
-        int gapTop = TOP + 4 + random.nextInt(Math.max(1, span));
+        int span = Math.max(1, bottomY() - topY() - GAP - 8);
+        int gapTop = topY() + 4 + random.nextInt(span);
         pipes.add(new Pipe(x, gapTop, false));
     }
 
@@ -61,6 +69,7 @@ public final class FlappyBlockGame extends BaseGame {
         double speed = 125 + Math.min(90, elapsedNanos() / 20_000_000.0);
         playerY += velocity * dt;
         velocity += 18.5 * dt;
+        int top = topY(), bottom = bottomY();
 
         for (int i = pipes.size() - 1; i >= 0; i--) {
             Pipe p = pipes.get(i);
@@ -86,7 +95,7 @@ public final class FlappyBlockGame extends BaseGame {
             nextSpawnNanos = now + 900_000_000L;
             metrics.level(1 + score / 500);
         }
-        if (playerY < TOP || playerY + PLAYER_SIZE > BOTTOM) finish(score);
+        if (playerY < top || playerY + PLAYER_SIZE > bottom) finish(score);
     }
 
     private boolean overlapsPipe(double x, int gapTop) {
@@ -102,14 +111,13 @@ public final class FlappyBlockGame extends BaseGame {
         MinecraftClient mc = MinecraftClient.getInstance();
         drawHeader(c, "FLAPPY BLOCK", status);
         int baseX = cx();
-        int top = Math.max(50, Math.min(TOP, mc.getWindow().getScaledHeight() - 190));
-        int bottom = Math.min(BOTTOM, mc.getWindow().getScaledHeight() - 35);
+        int top = topY(), bottom = bottomY();
         c.fill(baseX - 190, top, baseX + 190, bottom, 0xFF20262B);
-        int playerRenderY = top + (int) Math.round(playerY - TOP);
+        int playerRenderY = (int) Math.round(playerY);
         c.fill(baseX + PLAYER_X, playerRenderY, baseX + PLAYER_X + PLAYER_SIZE, playerRenderY + PLAYER_SIZE, 0xFF55CC88);
         for (Pipe p : pipes) {
             int x = baseX + (int) p.x();
-            int gapRenderTop = top + p.gapTop() - TOP;
+            int gapRenderTop = p.gapTop();
             c.fill(x, top, x + PIPE_WIDTH, gapRenderTop, 0xFF3F9B76);
             int lowerY = gapRenderTop + GAP;
             c.fill(x, lowerY, x + PIPE_WIDTH, bottom, 0xFF3F9B76);
