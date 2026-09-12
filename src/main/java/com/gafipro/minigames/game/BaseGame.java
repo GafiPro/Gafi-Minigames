@@ -8,24 +8,77 @@ import net.minecraft.util.Formatting;
 
 import java.util.Random;
 
+/** Shared lifecycle, timing and result behaviour for every local mini-game. */
 public abstract class BaseGame implements Game {
     protected final Random random = new Random();
+    protected final GameMetrics metrics = new GameMetrics();
+    protected GameState state = GameState.READY;
     protected boolean finished;
     protected int score;
     protected int ticks;
     protected boolean recorded;
     protected boolean won;
     protected String status = "";
+    private long startedNanos;
+    private long pausedAtNanos;
+    private long pausedTotalNanos;
 
-    @Override public void start() { }
-    @Override public void tick() { if (!finished) ticks++; }
+    @Override
+    public void start() {
+        state = GameState.PLAYING;
+        finished = false;
+        won = false;
+        recorded = false;
+        score = 0;
+        ticks = 0;
+        startedNanos = System.nanoTime();
+        pausedAtNanos = 0L;
+        pausedTotalNanos = 0L;
+        metrics.score(0).moves(0).combo(0).streak(0).level(0).mistakes(0).accuracyPercent(100).elapsedNanos(0);
+    }
+
+    @Override
+    public void tick() {
+        if (state == GameState.PLAYING) {
+            ticks++;
+            metrics.elapsedNanos(elapsedNanos());
+        }
+    }
+
     @Override public void render(DrawContext context, int mouseX, int mouseY, float delta) { }
     @Override public boolean mouseClicked(double mouseX, double mouseY, int button) { return false; }
     @Override public void keyPressed(int keyCode, int scanCode, int modifiers) { }
     @Override public boolean isFinished() { return finished; }
 
-    @Override public void close() {
+    public GameState state() { return state; }
+    public GameMetrics metrics() { return metrics; }
+
+    /** Uses a monotonic clock so elapsed durations are unaffected by wall-clock changes. */
+    public long elapsedNanos() {
+        if (startedNanos == 0L) return 0L;
+        long now = state == GameState.PAUSED && pausedAtNanos != 0L ? pausedAtNanos : System.nanoTime();
+        return Math.max(0L, now - startedNanos - pausedTotalNanos);
+    }
+
+    public long elapsedMillis() { return elapsedNanos() / 1_000_000L; }
+
+    public void pauseGame() {
+        if (state != GameState.PLAYING) return;
+        pausedAtNanos = System.nanoTime();
+        state = GameState.PAUSED;
+    }
+
+    public void resumeGame() {
+        if (state != GameState.PAUSED || pausedAtNanos == 0L) return;
+        pausedTotalNanos += System.nanoTime() - pausedAtNanos;
+        pausedAtNanos = 0L;
+        state = GameState.PLAYING;
+    }
+
+    @Override
+    public void close() {
         if (!finished || recorded) return;
+        metrics.score(score).elapsedNanos(elapsedNanos());
         GameStats.record(id(), score(), won);
         recorded = true;
     }
@@ -35,13 +88,28 @@ public abstract class BaseGame implements Game {
 
     protected void finish(int finalScore) {
         score = Math.max(0, finalScore);
+        metrics.score(score).elapsedNanos(elapsedNanos());
         finished = true;
+        state = GameState.LOST;
     }
 
     protected void finishWin(int finalScore) {
         won = true;
-        finish(finalScore);
+        score = Math.max(0, finalScore);
+        metrics.score(score).elapsedNanos(elapsedNanos());
+        finished = true;
+        state = GameState.WON;
     }
+
+    protected void finishDraw(int finalScore) {
+        won = false;
+        score = Math.max(0, finalScore);
+        metrics.score(score).elapsedNanos(elapsedNanos());
+        finished = true;
+        state = GameState.DRAW;
+    }
+
+    protected void markMove() { metrics.incrementMoves(); }
 
     protected void drawHeader(DrawContext c, String title, String subtitle) {
         MinecraftClient mc = MinecraftClient.getInstance();
@@ -57,5 +125,5 @@ public abstract class BaseGame implements Game {
 
     protected int cx() { return MinecraftClient.getInstance().getWindow().getScaledWidth() / 2; }
     protected int cy() { return MinecraftClient.getInstance().getWindow().getScaledHeight() / 2; }
-    protected int rgb(int r,int g,int b){return 0xFF000000 | (r<<16) | (g<<8) | b;}
+    protected int rgb(int r, int g, int b) { return 0xFF000000 | (r << 16) | (g << 8) | b; }
 }
