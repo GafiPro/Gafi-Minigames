@@ -6,6 +6,7 @@ import com.gafipro.minigames.game.board.BoardCollection;
 import com.gafipro.minigames.game.board.CheckersGame;
 import com.gafipro.minigames.game.board.ChessGame;
 import com.gafipro.minigames.game.board.ConnectFourGame;
+import com.gafipro.minigames.game.board.GomokuGame;
 import com.gafipro.minigames.game.board.ReversiGame;
 import com.gafipro.minigames.game.board.RockPaperScissorsGame;
 import com.gafipro.minigames.game.board.TicTacToeGame;
@@ -54,7 +55,7 @@ public final class GameFactory {
             case "dots_and_boxes" -> new BoardCollection.DotsAndBoxes();
             case "four_in_row_mini" -> new BoardCollection.FourInRowMini();
             case "reversi" -> new ReversiGame();
-            case "gomoku" -> new BoardCollection.Gomoku();
+            case "gomoku" -> new GomokuGame();
             case "hangman" -> new BoardCollection.Hangman();
             case "snake" -> new EndlessCollection.Snake();
             case "dino_run" -> new EndlessCollection.DinoRun();
