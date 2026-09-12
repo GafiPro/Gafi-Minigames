@@ -25,8 +25,13 @@ public final class ResultsScreen extends Screen {
 
     @Override public void render(DrawContext c, int mx, int my, float d) {
         renderInGameBackground(c);
-        int x = width / 2, y = height / 2 - 80;
-        c.fill(x - 190, y - 105, x + 190, y + 155, 0xFF20262D);
+        int compact = height < 300 ? 1 : 0;
+        int panelWidth = Math.min(380, Math.max(250, width - 12));
+        int panelTop = compact == 1 ? 8 : Math.max(16, height / 2 - 135);
+        int panelBottom = compact == 1 ? height - 8 : Math.min(height - 16, panelTop + 270);
+        int x = width / 2;
+        c.fill(x - panelWidth / 2, panelTop, x + panelWidth / 2, panelBottom, 0xFF20262D);
+
         GameState state = game instanceof BaseGame bg ? bg.state() : null;
         String headline = state == null ? "RESULTS" : switch (state) {
             case WON -> "YOU WIN";
@@ -35,39 +40,49 @@ public final class ResultsScreen extends Screen {
             default -> "RESULTS";
         };
         int headlineColor = state == GameState.WON ? 0xFF55DD88 : state == GameState.DRAW ? 0xFFFFCC55 : state == GameState.LOST ? 0xFFFF8888 : 0xFFFFFFFF;
-        c.drawCenteredTextWithShadow(textRenderer, Text.literal(headline).formatted(Formatting.BOLD), x, y - 74, headlineColor);
-        c.drawCenteredTextWithShadow(textRenderer, Text.literal(game.title()).formatted(Formatting.BOLD), x, y - 53, 0xFFFFFFFF);
+        int line = panelTop + 14;
+        c.drawCenteredTextWithShadow(textRenderer, Text.literal(headline).formatted(Formatting.BOLD), x, line, headlineColor);
+        line += 18;
+        c.drawCenteredTextWithShadow(textRenderer, Text.literal(game.title()).formatted(Formatting.BOLD), x, line, 0xFFFFFFFF);
+        line += compact == 1 ? 20 : 24;
 
-        int line = y - 25;
         if (game instanceof BaseGame bg) {
             var m = bg.metrics();
-            c.drawCenteredTextWithShadow(textRenderer, Text.literal("Score: " + m.score()), x, line, 0xFFFFCC55); line += 19;
-            if (m.moves() > 0) { c.drawCenteredTextWithShadow(textRenderer, Text.literal("Moves: " + m.moves()), x, line, 0xFFBBBBBB); line += 18; }
-            if (m.elapsedMillis() > 0) {
-                String label = game.id().equals("reaction_test") ? "Reaction time: " : "Time: ";
-                c.drawCenteredTextWithShadow(textRenderer, Text.literal(label + formatTime(m.elapsedMillis())), x, line, 0xFFBBBBBB); line += 18;
+            c.drawCenteredTextWithShadow(textRenderer, Text.literal("Score: " + m.score()), x, line, 0xFFFFCC55);
+            line += 17;
+            if (compact == 0) {
+                if (m.moves() > 0) { c.drawCenteredTextWithShadow(textRenderer, Text.literal("Moves: " + m.moves()), x, line, 0xFFBBBBBB); line += 17; }
+                if (m.elapsedMillis() > 0) {
+                    String label = game.id().equals("reaction_test") ? "Reaction time: " : "Time: ";
+                    c.drawCenteredTextWithShadow(textRenderer, Text.literal(label + formatTime(m.elapsedMillis())), x, line, 0xFFBBBBBB); line += 17;
+                }
+                if (m.level() > 0) { c.drawCenteredTextWithShadow(textRenderer, Text.literal("Level: " + m.level()), x, line, 0xFFBBBBBB); line += 17; }
+                if (m.mistakes() > 0) { c.drawCenteredTextWithShadow(textRenderer, Text.literal("Mistakes: " + m.mistakes()), x, line, 0xFFBBBBBB); line += 17; }
+                if (isAccuracyFocused()) { c.drawCenteredTextWithShadow(textRenderer, Text.literal(String.format("Accuracy: %.0f%%", m.accuracyPercent())), x, line, 0xFFBBBBBB); line += 17; }
             }
-            if (m.level() > 0) { c.drawCenteredTextWithShadow(textRenderer, Text.literal("Level: " + m.level()), x, line, 0xFFBBBBBB); line += 18; }
-            if (m.mistakes() > 0) { c.drawCenteredTextWithShadow(textRenderer, Text.literal("Mistakes: " + m.mistakes()), x, line, 0xFFBBBBBB); line += 18; }
-            if (isAccuracyFocused()) { c.drawCenteredTextWithShadow(textRenderer, Text.literal(String.format("Accuracy: %.0f%%", m.accuracyPercent())), x, line, 0xFFBBBBBB); line += 18; }
         } else {
-            c.drawCenteredTextWithShadow(textRenderer, Text.literal("Score: " + game.score()), x, line, 0xFFFFCC55); line += 19;
+            c.drawCenteredTextWithShadow(textRenderer, Text.literal("Score: " + game.score()), x, line, 0xFFFFCC55);
         }
 
-        String lifetime = "Games: " + GameStats.games(game.id())
-                + " • Wins: " + GameStats.wins(game.id())
-                + " • Losses: " + GameStats.losses(game.id())
-                + " • Draws: " + GameStats.draws(game.id());
-        c.drawCenteredTextWithShadow(textRenderer, Text.literal(lifetime), x, y + 73, 0xFFAAAAAA);
+        if (compact == 0) {
+            int lifetimeY = panelBottom - 82;
+            String lifetime = "Games: " + GameStats.games(game.id())
+                    + " • Wins: " + GameStats.wins(game.id())
+                    + " • Losses: " + GameStats.losses(game.id())
+                    + " • Draws: " + GameStats.draws(game.id());
+            c.drawCenteredTextWithShadow(textRenderer, Text.literal(lifetime), x, lifetimeY, 0xFFAAAAAA);
 
-        StringBuilder records = new StringBuilder();
-        if (isTimeFocused()) records.append("Best time: ").append(formatTime(GameStats.bestTime(game.id())));
-        else records.append("Best score: ").append(GameStats.best(game.id()));
-        records.append(" • Best streak: ").append(GameStats.bestStreak(game.id()));
-        if (GameStats.highestLevel(game.id()) > 0) records.append(" • Best level: ").append(GameStats.highestLevel(game.id()));
-        if (isAccuracyFocused()) records.append(String.format(" • Avg accuracy: %.0f%%", GameStats.accuracy(game.id())));
-        c.drawCenteredTextWithShadow(textRenderer, Text.literal(records.toString()), x, y + 91, 0xFF888888);
-        c.drawCenteredTextWithShadow(textRenderer, Text.literal("R / Enter  Play again     Esc  Games"), x, y + 123, 0xFFFFFFFF);
+            StringBuilder records = new StringBuilder();
+            if (isTimeFocused()) records.append("Best time: ").append(formatTime(GameStats.bestTime(game.id())));
+            else records.append("Best score: ").append(GameStats.best(game.id()));
+            records.append(" • Best streak: ").append(GameStats.bestStreak(game.id()));
+            if (GameStats.highestLevel(game.id()) > 0) records.append(" • Best level: ").append(GameStats.highestLevel(game.id()));
+            if (isAccuracyFocused()) records.append(String.format(" • Avg accuracy: %.0f%%", GameStats.accuracy(game.id())));
+            c.drawCenteredTextWithShadow(textRenderer, Text.literal(records.toString()), x, lifetimeY + 19, 0xFF888888);
+            c.drawCenteredTextWithShadow(textRenderer, Text.literal("R / Enter  Play again     Esc  Games"), x, panelBottom - 20, 0xFFFFFFFF);
+        } else {
+            c.drawCenteredTextWithShadow(textRenderer, Text.literal("R / Enter  Play again     Esc  Games"), x, panelBottom - 18, 0xFFFFFFFF);
+        }
     }
 
     private String formatTime(long millis) {
