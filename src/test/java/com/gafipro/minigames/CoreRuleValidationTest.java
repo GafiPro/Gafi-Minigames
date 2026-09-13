@@ -4,6 +4,7 @@ import com.gafipro.minigames.core.GameCatalog;
 import com.gafipro.minigames.core.GameFactory;
 import com.gafipro.minigames.core.WordBank;
 import com.gafipro.minigames.game.Game;
+import com.gafipro.minigames.game.GameState;
 import com.gafipro.minigames.game.arcade.ArcadeCollection;
 import com.gafipro.minigames.game.arcade.WhackAMoleGame;
 import com.gafipro.minigames.game.board.ConnectFourGame;
@@ -31,6 +32,24 @@ class CoreRuleValidationTest {
             assertEquals(entry.id(),game.id());
             assertEquals(entry.title(),game.title());
             assertEquals(GameCatalog.displayCategory(entry.category()),game.category());
+        }));
+    }
+
+    @TestFactory
+    Stream<DynamicTest> everyGameSurvivesARealLifecycleReset(){
+        return GameCatalog.all().stream().map(entry->DynamicTest.dynamicTest("lifecycle " + entry.id(),()->{
+            Game game=GameFactory.create(entry.id());
+            assertTrue(game instanceof com.gafipro.minigames.game.BaseGame,"game must use the shared lifecycle");
+            var base=(com.gafipro.minigames.game.BaseGame)game;
+            assertDoesNotThrow(base::begin);
+            assertEquals(GameState.PLAYING,base.state(),"game should enter PLAYING after begin");
+            assertEquals(0,base.score());
+            assertEquals(0,base.metrics().moves());
+            base.begin();
+            assertEquals(GameState.PLAYING,base.state(),"second begin must create a fresh playable session");
+            assertEquals(0,base.score());
+            assertEquals(0,base.metrics().moves());
+            base.finishForTesting();
         }));
     }
 
