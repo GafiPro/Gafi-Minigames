@@ -78,10 +78,10 @@ public final class ArcadeCollection {
     public static final class TargetPractice extends BaseGame {
         private double x,y,dx,dy;private int hits;private long end,lastNanos;
         @Override public String id(){return "target_practice";}@Override public String title(){return "Target Practice";}@Override public String category(){return "Arcade";}
-        private double minX(){return cx()-Math.max(25,Math.min(150,MinecraftClient.getInstance().getWindow().getScaledWidth()/2.0-25));}
-        private double maxX(){return cx()+Math.max(25,Math.min(150,MinecraftClient.getInstance().getWindow().getScaledWidth()/2.0-25));}
+        private double minX(){double half=Math.max(25,Math.min(150,viewportWidth()/2.0-25));return cx()-half;}
+        private double maxX(){double half=Math.max(25,Math.min(150,viewportWidth()/2.0-25));return cx()+half;}
         private double minY(){return 90;}
-        private double maxY(){return Math.max(minY(),MinecraftClient.getInstance().getWindow().getScaledHeight()-35);}
+        private double maxY(){return Math.max(minY(),viewportHeight()-35);}
         @Override public void start(){x=cx();y=Math.min(130,maxY());dx=145;dy=105;hits=0;end=System.nanoTime()+15_000_000_000L;lastNanos=System.nanoTime();}
         @Override public void tick(){super.tick();if(finished)return;long now=System.nanoTime();if(now>=end){finishWin(score);return;}double dt=Math.min(0.05,Math.max(0,(now-lastNanos)/1_000_000_000.0));lastNanos=now;x+=dx*dt;y+=dy*dt;if(x<minX()||x>maxX())dx=-dx;if(y<minY()||y>maxY())dy=-dy;x=Math.max(minX(),Math.min(maxX(),x));y=Math.max(minY(),Math.min(maxY(),y));}
         @Override public boolean mouseClicked(double mx,double my,int b){if(b==0&&!finished&&Math.hypot(mx-x,my-y)<=25){hits++;score=hits*100;dx*=1.02;dy*=1.02;markMove();}return true;}
