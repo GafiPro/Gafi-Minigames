@@ -79,9 +79,10 @@ public final class GamesScreen extends Screen {
         }
 
         List<GameCatalog.Entry> list = filtered();
-        int per = perPage(), start = page * per;
+        int per = perPage();
         int pages = Math.max(1, (list.size() + per - 1) / per);
-        if (page >= pages) page = pages - 1;
+        page = Math.max(0, Math.min(page, pages - 1));
+        int start = page * per;
 
         int cw = cardWidth(), ch = cardHeight(), g = cardGap(), cols = columns(), left = cardsLeft();
         for (int j = 0; j < per && start + j < list.size(); j++) {
@@ -141,7 +142,9 @@ public final class GamesScreen extends Screen {
         }
 
         List<GameCatalog.Entry> list = filtered();
-        int per = perPage(), start = page * per, cw = cardWidth(), ch = cardHeight(), g = cardGap(), cols = columns(), left = cardsLeft();
+        int per = perPage(), pages = Math.max(1, (list.size() + per - 1) / per);
+        page = Math.max(0, Math.min(page, pages - 1));
+        int start = page * per, cw = cardWidth(), ch = cardHeight(), g = cardGap(), cols = columns(), left = cardsLeft();
         for (int j = 0; j < per && start + j < list.size(); j++) {
             int col = j % cols, row = j / cols, x = left + col * (cw + g), y = cardsTop() + row * (ch + g);
             if (inside(mx, my, x, y, cw, ch)) {
