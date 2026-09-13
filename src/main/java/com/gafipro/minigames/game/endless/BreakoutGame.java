@@ -30,6 +30,10 @@ public final class BreakoutGame extends BaseGame {
         status = "A/D or arrows • Destroy every brick • Lives: 3";
     }
 
+    private int fieldHalfWidth() { return Math.max(120, Math.min(180, MinecraftClient.getInstance().getWindow().getScaledWidth() / 2 - 12)); }
+    private int paddleLimit() { return Math.max(40, fieldHalfWidth() - 48); }
+    private int deathY() { return Math.min(250, MinecraftClient.getInstance().getWindow().getScaledHeight() - 8); }
+
     private void setupLevel() {
         rows = Math.min(8, 5 + level / 2);
         cols = 8;
@@ -53,14 +57,15 @@ public final class BreakoutGame extends BaseGame {
         ballX += vx * dt;
         ballY += vy * dt;
 
-        if (ballX < -180) { ballX = -180; vx = Math.abs(vx); }
-        if (ballX > 180) { ballX = 180; vx = -Math.abs(vx); }
+        int wall = fieldHalfWidth();
+        if (ballX < -wall) { ballX = -wall; vx = Math.abs(vx); }
+        if (ballX > wall) { ballX = wall; vx = -Math.abs(vx); }
         if (ballY < 58) { ballY = 58; vy = Math.abs(vy); }
 
         double paddleLeft = paddleX - 48;
         double paddleRight = paddleX + 48;
-        double paddleTop = 218;
-        double paddleBottom = 228;
+        double paddleTop = Math.min(218, MinecraftClient.getInstance().getWindow().getScaledHeight() - 28);
+        double paddleBottom = paddleTop + 10;
         if (vy > 0 && ballY + 6 >= paddleTop && ballY - 6 <= paddleBottom && ballX >= paddleLeft - 6 && ballX <= paddleRight + 6) {
             ballY = paddleTop - 7;
             double hit = (ballX - paddleX) / 48.0;
@@ -83,7 +88,7 @@ public final class BreakoutGame extends BaseGame {
             metrics.level(level);
             if (level >= 5) finishWin(score + lives * 100);
             else setupLevel();
-        } else if (ballY > 250) {
+        } else if (ballY > deathY()) {
             lives--;
             if (lives <= 0) finish(score);
             else setupBall();
@@ -109,7 +114,8 @@ public final class BreakoutGame extends BaseGame {
             int top = 60 + y * 22;
             c.fill(left + 2, top + 2, left + 38, top + 20, 0xFFE67E22);
         }
-        c.fill(baseX + (int) paddleX - 48, 218, baseX + (int) paddleX + 48, 228, 0xFF55CC88);
+        int paddleTop = Math.min(218, mc.getWindow().getScaledHeight() - 28);
+        c.fill(baseX + (int) paddleX - 48, paddleTop, baseX + (int) paddleX + 48, paddleTop + 10, 0xFF55CC88);
         c.fill(baseX + (int) ballX - 6, (int) ballY - 6, baseX + (int) ballX + 6, (int) ballY + 6, 0xFFFFFFFF);
         c.drawCenteredTextWithShadow(mc.textRenderer, net.minecraft.text.Text.literal("Score: " + score + " • Lives: " + lives), baseX, Math.min(246, mc.getWindow().getScaledHeight() - 10), 0xFFFFFFFF);
     }
@@ -119,12 +125,12 @@ public final class BreakoutGame extends BaseGame {
         if (finished || state != GameState.PLAYING) return;
         if (keyCode == GLFW.GLFW_KEY_LEFT || keyCode == GLFW.GLFW_KEY_A) paddleX -= 18;
         else if (keyCode == GLFW.GLFW_KEY_RIGHT || keyCode == GLFW.GLFW_KEY_D) paddleX += 18;
-        paddleX = Math.max(-132, Math.min(132, paddleX));
+        paddleX = Math.max(-paddleLimit(), Math.min(paddleLimit(), paddleX));
     }
 
     @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button != 0 || finished || state != GameState.PLAYING) return true;
-        paddleX = Math.max(-132, Math.min(132, mouseX - cx()));
+        paddleX = Math.max(-paddleLimit(), Math.min(paddleLimit(), mouseX - cx()));
         return true;
     }
 }
