@@ -108,14 +108,16 @@ public final class CheckersGame extends BaseGame {
 
     private void resolve(){int white=0,black=0;for(int[]row:board)for(int p:row){if(p>0)white++;if(p<0)black++;}if(black==0){status="You win!";finishWin(1000+score);return;}if(white==0){status="Black wins.";finish(0);return;}if(legalTurns(whiteTurn).isEmpty()){if(whiteTurn){status="No legal moves — Black wins.";finish(0);}else{status="No legal moves — you win!";finishWin(1000+score);}}else status=whiteTurn?"Your turn • White":"Black is thinking...";}
 
-    @Override public void render(DrawContext c,int mx,int my,float delta){var mc=MinecraftClient.getInstance();drawHeader(c,"CHECKERS",status);int cell=Math.min(54,Math.max(34,(mc.getWindow().getScaledHeight()-155)/8));int size=cell*8,ox=cx()-size/2,oy=78;
+    private int boardCell(){int h=MinecraftClient.getInstance().getWindow().getScaledHeight();int w=MinecraftClient.getInstance().getWindow().getScaledWidth();return Math.max(14,Math.min(54,Math.min((h-94)/8,(w-24)/8)));}
+    private int boardTop(){return 68;}
+    @Override public void render(DrawContext c,int mx,int my,float delta){var mc=MinecraftClient.getInstance();drawHeader(c,"CHECKERS",status);int cell=boardCell();int size=cell*8,ox=cx()-size/2,oy=boardTop();
         for(int r=0;r<8;r++)for(int col=0;col<8;col++){int x=ox+col*cell,y=oy+r*cell;c.fill(x,y,x+cell,y+cell,((r+col)&1)==0?0xFFD7C2A6:0xFF6D4A32);if(r==sr&&col==sc)c.fill(x+2,y+2,x+cell-2,y+cell-2,0xFFCCAA33);int p=board[r][col];if(p!=0){int cx=x+cell/2,cy=y+cell/2;c.fill(cx-cell/2+8,cy-cell/2+8,cx+cell/2-8,cy+cell/2-8,p>0?0xFFEEEEEE:0xFF333333);if(Math.abs(p)==2)c.drawCenteredTextWithShadow(mc.textRenderer,Text.literal("K"),cx,cy-5,p>0?0xFF333333:0xFFFFFFFF);}}
         c.drawCenteredTextWithShadow(mc.textRenderer,Text.literal("Click a piece and its legal destination • R Restart • 1/2/3 Difficulty"),cx(),oy+size+10,0xFFAAAAAA);
     }
 
     @Override public boolean mouseClicked(double mx,double my,int button){
         if(button!=0||finished||!whiteTurn)return true;
-        int cell=Math.min(54,Math.max(34,(MinecraftClient.getInstance().getWindow().getScaledHeight()-155)/8));int size=cell*8,ox=cx()-size/2,oy=78;
+        int cell=boardCell();int size=cell*8,ox=cx()-size/2,oy=boardTop();
         int c=(int)((mx-ox)/cell),r=(int)((my-oy)/cell);if(!in(r,c))return true;
 
         if(sr<0){
