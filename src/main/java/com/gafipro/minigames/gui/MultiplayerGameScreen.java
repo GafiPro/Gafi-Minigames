@@ -17,7 +17,13 @@ public final class MultiplayerGameScreen extends Screen {
     @Override protected void init(){}
     private String name(){return MinecraftClient.getInstance().player==null?"":MinecraftClient.getInstance().player.getGameProfile().name();}
     private boolean myTurn(){return match.gameId.equals("rock_paper_scissors")||((match.turn==0)==match.localHost);}
-    @Override public void tick(){if(match.finished){localFinished=true;return;}String r=match.remoteMove;if(!r.isEmpty()){if(applyRemote(r))MultiplayerManager.acknowledgeRemoteMove(match,r);}}
+    @Override public void tick(){
+        if(match.finished){
+            if(!localFinished){localFinished=true;String msg=match.result==null||match.result.isBlank()?"Match finished.":match.result;MinecraftClient.getInstance().setScreen(new PvPResultScreen(parent,match,msg));}
+            return;
+        }
+        String r=match.remoteMove;if(!r.isEmpty()){if(applyRemote(r))MultiplayerManager.acknowledgeRemoteMove(match,r);}
+    }
     private boolean applyRemote(String move){try{
         if(match.gameId.equals("tic_tac_toe")&&move.startsWith("T:")){int i=Integer.parseInt(move.substring(2));if(i>=0&&i<9&&ttt[i]==0){ttt[i]=match.localHost?2:1;match.turn=1-match.turn;checkTtt();return true;}}
         else if(match.gameId.equals("connect_four")&&move.startsWith("C:")){int col=Integer.parseInt(move.substring(2));if(col>=0&&col<7&&drop(connect,col,match.localHost?2:1)){match.turn=1-match.turn;checkConnect();return true;}}
