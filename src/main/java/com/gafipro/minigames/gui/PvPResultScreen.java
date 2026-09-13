@@ -28,6 +28,7 @@ public final class PvPResultScreen extends Screen {
     private int top() { int h = panelHeight(); return Math.max(10, (height - h) / 2); }
     private int bottom() { return Math.min(height - 10, top() + panelHeight()); }
     private int buttonY() { return bottom() - 34; }
+    private int buttonBottom() { return bottom() - 8; }
     private int rematchLeft() { return width / 2 - (compact() ? 125 : 145); }
     private int rematchRight() { return width / 2 - 5; }
     private int gamesLeft() { return width / 2 + 5; }
@@ -35,13 +36,14 @@ public final class PvPResultScreen extends Screen {
 
     @Override public void render(DrawContext c, int mx, int my, float d) {
         renderInGameBackground(c);
-        int x = width / 2, top = top(), bottom = bottom();
-        c.fill(x - panelWidth() / 2, top, x + panelWidth() / 2, bottom, 0xFF20262D);
-        c.drawCenteredTextWithShadow(textRenderer, Text.literal(result), x, top + 28, 0xFF55CC88);
-        c.drawCenteredTextWithShadow(textRenderer, Text.literal(match.host + "  vs  " + match.opponent), x, top + 52, 0xFFFFFFFF);
-        if (requested) c.drawCenteredTextWithShadow(textRenderer, Text.literal("Waiting for opponent..."), x, top + 76, 0xFFAAAAAA);
-        drawButton(c, rematchLeft(), buttonY(), rematchRight(), bottom - 8, requested ? "WAITING..." : "REMATCH", mx, my, !requested);
-        drawButton(c, gamesLeft(), buttonY(), gamesRight(), bottom - 8, "GAMES", mx, my, false);
+        int x = width / 2, panelTop = top(), panelBottom = bottom();
+        c.fill(x - panelWidth() / 2, panelTop, x + panelWidth() / 2, panelBottom, 0xFF20262D);
+        c.drawCenteredTextWithShadow(textRenderer, Text.literal(result), x, panelTop + 28, 0xFF55CC88);
+        c.drawCenteredTextWithShadow(textRenderer, Text.literal(match.host + "  vs  " + match.opponent), x, panelTop + 52, 0xFFFFFFFF);
+        if (requested) c.drawCenteredTextWithShadow(textRenderer, Text.literal("Waiting for opponent..."), x, panelTop + 76, 0xFFAAAAAA);
+        int buttonsBottom = buttonBottom();
+        drawButton(c, rematchLeft(), buttonY(), rematchRight(), buttonsBottom, requested ? "WAITING..." : "REMATCH", mx, my, !requested);
+        drawButton(c, gamesLeft(), buttonY(), gamesRight(), buttonsBottom, "GAMES", mx, my, false);
     }
 
     private void drawButton(DrawContext c, int left, int top, int right, int bottom, String label, int mx, int my, boolean active) {
@@ -62,8 +64,9 @@ public final class PvPResultScreen extends Screen {
 
     @Override public boolean mouseClicked(Click click, boolean doubled) {
         if (click.button() != GLFW.GLFW_MOUSE_BUTTON_1) return super.mouseClicked(click, doubled);
-        if (inside(click.x(), click.y(), rematchLeft(), buttonY(), rematchRight() - rematchLeft(), bottom - 8 - buttonY())) { request(); return true; }
-        if (inside(click.x(), click.y(), gamesLeft(), buttonY(), gamesRight() - gamesLeft(), bottom - 8 - buttonY())) { close(); return true; }
+        int buttonsBottom = buttonBottom();
+        if (inside(click.x(), click.y(), rematchLeft(), buttonY(), rematchRight() - rematchLeft(), buttonsBottom - buttonY())) { request(); return true; }
+        if (inside(click.x(), click.y(), gamesLeft(), buttonY(), gamesRight() - gamesLeft(), buttonsBottom - buttonY())) { close(); return true; }
         return true;
     }
 
