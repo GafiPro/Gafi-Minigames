@@ -20,6 +20,8 @@ public final class WhackAMoleGame extends BaseGame {
     @Override public String title() { return "Whack-A-Mole"; }
     @Override public String category() { return "Arcade"; }
 
+    static boolean completed(int hits) { return hits > 0; }
+
     @Override public void start() {
         target = random.nextInt(12);
         hits = 0;
@@ -50,7 +52,8 @@ public final class WhackAMoleGame extends BaseGame {
         long now = System.nanoTime();
         if (now >= endNanos) {
             score = Math.max(0, hits * 100 - misses * 15);
-            finishWin(score);
+            if (completed(hits)) finishWin(score);
+            else finish(score);
             return;
         }
         if (now >= targetUntilNanos) {
@@ -66,7 +69,7 @@ public final class WhackAMoleGame extends BaseGame {
         if (x < 0 || y < 0 || x >= 4 || y >= 3) return true;
         if (y * 4 + x == target) {
             hits++;
-            score = hits * 100 - misses * 15;
+            score = Math.max(0, hits * 100 - misses * 15);
             markMove();
             nextTarget();
         } else {
