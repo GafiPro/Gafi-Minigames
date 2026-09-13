@@ -99,9 +99,7 @@ public final class MinesweeperGame extends BaseGame {
             for (int dy = -1; dy <= 1; dy++) for (int dx = -1; dx <= 1; dx++) {
                 if (dx == 0 && dy == 0) continue;
                 int nx = x + dx, ny = y + dy;
-                if (nx >= 0 && nx < width && ny >= 0 && ny < height && !open[ny][nx] && !flags[ny][nx] && !mines[ny][nx]) {
-                    queue.addLast(ny * width + nx);
-                }
+                if (nx >= 0 && nx < width && ny >= 0 && ny < height && !open[ny][nx] && !flags[ny][nx] && !mines[ny][nx]) queue.addLast(ny * width + nx);
             }
         }
     }
@@ -116,11 +114,13 @@ public final class MinesweeperGame extends BaseGame {
 
     private int cellSize() {
         MinecraftClient mc = MinecraftClient.getInstance();
-        return Math.max(16, Math.min(28, Math.min((mc.getWindow().getScaledWidth() - 30) / width, (mc.getWindow().getScaledHeight() - 110) / height)));
+        int availableWidth = Math.max(1, mc.getWindow().getScaledWidth() - 24);
+        int availableHeight = Math.max(1, mc.getWindow().getScaledHeight() - 95);
+        return Math.max(6, Math.min(28, Math.min(availableWidth / width, availableHeight / height)));
     }
 
     private int boardLeft(int cell) { return cx() - width * cell / 2; }
-    private int boardTop() { return 70; }
+    private int boardTop() { return 66; }
 
     @Override
     public void render(DrawContext c, int mx, int my, float delta) {
@@ -134,16 +134,16 @@ public final class MinesweeperGame extends BaseGame {
             boolean shown = open[y][x];
             int bg = shown ? 0xFFC9CDD2 : 0xFF3C444D;
             c.fill(px + 1, py + 1, px + cell - 1, py + cell - 1, bg);
-            if (!shown && flags[y][x]) {
-                c.drawCenteredTextWithShadow(tr, Text.literal("⚑").formatted(Formatting.BOLD), px + cell / 2, py + Math.max(3, cell / 2 - 5), 0xFFFFD34D);
-            } else if (shown && mines[y][x]) {
-                c.drawCenteredTextWithShadow(tr, Text.literal("✹").formatted(Formatting.BOLD), px + cell / 2, py + Math.max(3, cell / 2 - 5), 0xFFE74C3C);
-            } else if (shown) {
-                int n = adjacent(x, y);
-                if (n > 0) c.drawCenteredTextWithShadow(tr, Text.literal(Integer.toString(n)).formatted(Formatting.BOLD), px + cell / 2, py + Math.max(3, cell / 2 - 5), numberColor(n));
+            if (cell >= 10) {
+                if (!shown && flags[y][x]) c.drawCenteredTextWithShadow(tr, Text.literal("⚑").formatted(Formatting.BOLD), px + cell / 2, py + Math.max(1, cell / 2 - 5), 0xFFFFD34D);
+                else if (shown && mines[y][x]) c.drawCenteredTextWithShadow(tr, Text.literal("✹").formatted(Formatting.BOLD), px + cell / 2, py + Math.max(1, cell / 2 - 5), 0xFFE74C3C);
+                else if (shown) {
+                    int n = adjacent(x, y);
+                    if (n > 0) c.drawCenteredTextWithShadow(tr, Text.literal(Integer.toString(n)).formatted(Formatting.BOLD), px + cell / 2, py + Math.max(1, cell / 2 - 5), numberColor(n));
+                }
             }
         }
-        if (!generated) c.drawCenteredTextWithShadow(tr, Text.literal("First click is safe").formatted(Formatting.GRAY), cx(), top + height * cell + 12, 0xFFFFFFFF);
+        if (!generated) c.drawCenteredTextWithShadow(tr, Text.literal(cell >= 10 ? "First click is safe" : "Click a tile to start").formatted(Formatting.GRAY), cx(), top + height * cell + 10, 0xFFFFFFFF);
     }
 
     private int numberColor(int n) {
@@ -171,10 +171,7 @@ public final class MinesweeperGame extends BaseGame {
         }
         if (button != 0 || flags[y][x]) return true;
         if (!generated) placeMines(x, y);
-        if (mines[y][x]) {
-            explode();
-            return true;
-        }
+        if (mines[y][x]) { explode(); return true; }
         reveal(x, y);
         markMove();
         if (won()) {
