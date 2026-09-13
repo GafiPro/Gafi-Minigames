@@ -22,6 +22,7 @@ public final class GameStats {
     private static final Logger LOGGER = LoggerFactory.getLogger("GafiMinigames/Stats");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path FILE = FabricLoader.getInstance().getConfigDir().resolve("gafi-minigames.json");
+    private static final Set<String> TIME_FOCUSED_IDS = Set.of("reaction_test", "typing_speed");
     private static final Map<String, Integer> games = new HashMap<>(), wins = new HashMap<>(), losses = new HashMap<>(), draws = new HashMap<>(), best = new HashMap<>(), streak = new HashMap<>(), bestStreak = new HashMap<>(), highestLevel = new HashMap<>();
     private static final Map<String, Long> bestTime = new HashMap<>();
     private static final Map<String, Double> accuracy = new HashMap<>();
@@ -88,7 +89,8 @@ public final class GameStats {
             bestStreak.put(id, Math.min(Math.max(0, bestStreak.getOrDefault(id, 0)), total));
             best.put(id, Math.max(0, best.getOrDefault(id, 0)));
             highestLevel.put(id, Math.max(0, highestLevel.getOrDefault(id, 0)));
-            if (bestTime.getOrDefault(id, 0L) < 0) bestTime.put(id, 0L);
+            if (!TIME_FOCUSED_IDS.contains(id)) bestTime.remove(id);
+            else if (bestTime.getOrDefault(id, 0L) < 0) bestTime.put(id, 0L);
             double acc = accuracy.getOrDefault(id, 100.0); if (!Double.isFinite(acc) || acc < 0 || acc > 100) accuracy.put(id, 100.0);
         }
     }
@@ -114,7 +116,7 @@ public final class GameStats {
         else if (won) { wins.merge(id, 1, GameStats::saturatingAdd); int currentStreak = streak.merge(id, 1, GameStats::saturatingAdd); bestStreak.merge(id, currentStreak, Math::max); }
         else { losses.merge(id, 1, GameStats::saturatingAdd); streak.put(id, 0); }
         best.merge(id, Math.max(0, score), Math::max);
-        if (elapsedMillis > 0) bestTime.merge(id, elapsedMillis, (old, value) -> old == 0 ? value : Math.min(old, value));
+        if (TIME_FOCUSED_IDS.contains(id) && elapsedMillis > 0) bestTime.merge(id, elapsedMillis, (old, value) -> old == 0 ? value : Math.min(old, value));
         if (level > 0) highestLevel.merge(id, level, Math::max);
         if (Double.isFinite(accuracyPercent) && accuracyPercent >= 0 && accuracyPercent <= 100) {
             double old = accuracy.getOrDefault(id, -1.0); accuracy.put(id, old < 0 ? accuracyPercent : (old + accuracyPercent) / 2.0);
