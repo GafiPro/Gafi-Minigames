@@ -8,6 +8,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.input.CharInput;
 import net.minecraft.client.input.KeyInput;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -157,11 +158,14 @@ public final class GamesScreen extends Screen {
         return super.mouseClicked(click, doubled);
     }
 
-    @Override public boolean charTyped(char chr, int modifiers) {
-        if (!searchFocused) return super.charTyped(chr, modifiers);
-        if (!Character.isISOControl(chr) && search.length() < 32) {
-            search += chr;
-            page = 0;
+    @Override public boolean charTyped(CharInput input) {
+        if (!searchFocused) return super.charTyped(input);
+        if (input.isValidChar()) {
+            String value = input.asString();
+            if (search.length() + value.length() <= 32) {
+                search += value;
+                page = 0;
+            }
         }
         return true;
     }
