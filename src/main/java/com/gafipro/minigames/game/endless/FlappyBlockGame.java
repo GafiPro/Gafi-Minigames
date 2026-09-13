@@ -30,11 +30,11 @@ public final class FlappyBlockGame extends BaseGame {
     @Override public String category() { return "Endless"; }
 
     private int topY() {
-        return Math.max(50, Math.min(DEFAULT_TOP, MinecraftClient.getInstance().getWindow().getScaledHeight() - 190));
+        return Math.max(50, Math.min(DEFAULT_TOP, viewportHeight() - 190));
     }
 
     private int bottomY() {
-        return Math.min(DEFAULT_BOTTOM, MinecraftClient.getInstance().getWindow().getScaledHeight() - 35);
+        return Math.min(DEFAULT_BOTTOM, viewportHeight() - 35);
     }
 
     @Override public void start() {
