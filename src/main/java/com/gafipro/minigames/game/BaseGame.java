@@ -133,7 +133,9 @@ public abstract class BaseGame implements Game {
     }
 
     protected boolean inside(double mx, double my, int x, int y, int w, int h) { return mx >= x && mx < x + w && my >= y && my < y + h; }
-    protected int cx() { return MinecraftClient.getInstance().getWindow().getScaledWidth() / 2; }
-    protected int cy() { return MinecraftClient.getInstance().getWindow().getScaledHeight() / 2; }
+    protected int viewportWidth() { MinecraftClient mc = MinecraftClient.getInstance(); return mc == null ? 320 : mc.getWindow().getScaledWidth(); }
+    protected int viewportHeight() { MinecraftClient mc = MinecraftClient.getInstance(); return mc == null ? 240 : mc.getWindow().getScaledHeight(); }
+    protected int cx() { return viewportWidth() / 2; }
+    protected int cy() { return viewportHeight() / 2; }
     protected int rgb(int r, int g, int b) { return 0xFF000000 | (r << 16) | (g << 8) | b; }
 }
