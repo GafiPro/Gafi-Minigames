@@ -49,7 +49,6 @@ class CoreRuleValidationTest {
             assertEquals(GameState.PLAYING,base.state(),"second begin must create a fresh playable session");
             assertEquals(0,base.score());
             assertEquals(0,base.metrics().moves());
-            base.finishForTesting();
         }));
     }
 
